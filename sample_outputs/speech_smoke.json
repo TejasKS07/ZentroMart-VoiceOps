@@ -1,0 +1,23 @@
+{
+  "kind": "synthetic_loopback",
+  "results": [
+    {
+      "language": "en-IN",
+      "status": "passed",
+      "seconds": 2.08,
+      "transcript": "How many coupons can I use on an order?"
+    },
+    {
+      "language": "hi-IN",
+      "status": "passed",
+      "seconds": 2.4,
+      "transcript": "एक order में कितने coupon इस्तेमाल कर सकते हैं?"
+    },
+    {
+      "language": "hi-en",
+      "status": "passed",
+      "seconds": 2.4,
+      "transcript": "ek order par kitne coupon use kar sakte hain?"
+    }
+  ]
+}

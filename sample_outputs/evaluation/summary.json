@@ -1,0 +1,129 @@
+{
+  "status": "finished",
+  "model": "gemini-3.5-flash-lite",
+  "generation_parameters": {},
+  "scope": {
+    "original": true,
+    "asr": true,
+    "automatic_grading": true,
+    "judge_batch_size": 10,
+    "limit": null
+  },
+  "runs": [
+    {
+      "stage": "baseline",
+      "variant": "original",
+      "output_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/runtime/baseline/20261029T213635Z-239d5e314d71",
+      "summary": {
+        "schema_version": "1.1",
+        "run_status": "finished",
+        "cases": 52,
+        "processed": 52,
+        "completed": 52,
+        "failed": 0,
+        "decision_match_rate": 0.8269230769230769,
+        "fact_correctness": "not_scored"
+      },
+      "grading": {
+        "method": "provisional_model_judge",
+        "judge_batch_size": 10,
+        "cases": 52,
+        "correct": 7,
+        "unresolved": 0,
+        "status": "complete",
+        "accuracy": 0.1346153846153846,
+        "correctness_lower_bound": 0.1346153846153846,
+        "note": "Batched model-judged practice score; requires human spot-checking, not an organizer score."
+      }
+    },
+    {
+      "stage": "rag",
+      "variant": "original",
+      "output_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/runtime/rag/20261029T213635Z-3e97e1a9ba8d",
+      "summary": {
+        "schema_version": "1.1",
+        "run_status": "finished",
+        "cases": 52,
+        "processed": 52,
+        "completed": 41,
+        "failed": 11,
+        "decision_match_rate": 0.7115384615384616,
+        "fact_correctness": "not_scored"
+      },
+      "grading": {
+        "method": "provisional_model_judge",
+        "judge_batch_size": 10,
+        "cases": 52,
+        "correct": 24,
+        "unresolved": 0,
+        "status": "complete",
+        "accuracy": 0.46153846153846156,
+        "correctness_lower_bound": 0.46153846153846156,
+        "note": "Batched model-judged practice score; requires human spot-checking, not an organizer score."
+      }
+    },
+    {
+      "stage": "baseline",
+      "variant": "asr",
+      "output_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/runtime/baseline/20261029T214258Z-8ac89d7861f9",
+      "summary": {
+        "schema_version": "1.1",
+        "run_status": "finished",
+        "cases": 52,
+        "processed": 52,
+        "completed": 52,
+        "failed": 0,
+        "decision_match_rate": 0.7884615384615384,
+        "fact_correctness": "not_scored"
+      },
+      "grading": {
+        "method": "provisional_model_judge",
+        "judge_batch_size": 10,
+        "cases": 52,
+        "correct": 8,
+        "unresolved": 0,
+        "status": "complete",
+        "accuracy": 0.15384615384615385,
+        "correctness_lower_bound": 0.15384615384615385,
+        "note": "Batched model-judged practice score; requires human spot-checking, not an organizer score."
+      }
+    },
+    {
+      "stage": "rag",
+      "variant": "asr",
+      "output_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/runtime/rag/20261029T214412Z-1c56577b7900",
+      "summary": {
+        "schema_version": "1.1",
+        "run_status": "finished",
+        "cases": 52,
+        "processed": 52,
+        "completed": 42,
+        "failed": 10,
+        "decision_match_rate": 0.7307692307692307,
+        "fact_correctness": "not_scored"
+      },
+      "grading": {
+        "method": "provisional_model_judge",
+        "judge_batch_size": 10,
+        "cases": 52,
+        "correct": 30,
+        "unresolved": 0,
+        "status": "complete",
+        "accuracy": 0.5769230769230769,
+        "correctness_lower_bound": 0.5769230769230769,
+        "note": "Batched model-judged practice score; requires human spot-checking, not an organizer score."
+      }
+    }
+  ],
+  "rate_limit": {
+    "user_rpm_limit": 100,
+    "safety_capacity": 90,
+    "window_seconds": 60,
+    "peak_quota_weight_in_window": 70,
+    "http_attempts": 248,
+    "successful_http_requests": 234,
+    "embedding_http_requests": 2,
+    "chat_completion_http_requests": 246,
+    "rate_limit_responses": 14
+  }
+}

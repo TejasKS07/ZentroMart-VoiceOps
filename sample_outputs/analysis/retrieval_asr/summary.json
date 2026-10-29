@@ -1,0 +1,31 @@
+{
+  "mode": "retrieval_only",
+  "variant": "asr",
+  "k": 12,
+  "embedding_model": "google/gemini-embedding-001-768",
+  "index_fingerprint": "796e1b080d558132fa6763a4ed29e782a7dd46306553d0f66e62202f3be7922f",
+  "questions": 52,
+  "questions_with_gold": 47,
+  "mean_recall_at_k": 0.9219858156028369,
+  "mean_context_recall": 1.0,
+  "mean_precision_at_k": 0.14716312056737588,
+  "mean_context_precision": 0.05513483402131863,
+  "mean_context_chunks": 35.51923076923077,
+  "per_language": {
+    "hi-en": {
+      "questions": 10,
+      "context_recall": 1.0
+    },
+    "en": {
+      "questions": 30,
+      "context_recall": 1.0
+    },
+    "hi": {
+      "questions": 7,
+      "context_recall": 1.0
+    }
+  },
+  "generation_accuracy": "not_scored",
+  "generation_calls": 0,
+  "embedding_requests": 0
+}

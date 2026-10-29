@@ -83,6 +83,7 @@ class AgentResponse:
     generation: GenerationTrace | None = None
     claims: tuple[GroundedClaim, ...] = ()
     supported: bool | None = None
+    diagnostics: dict[str, Any] = field(default_factory=dict)
     schema_version: str = field(default="1.0", init=False)
 
     def __post_init__(self):
@@ -106,5 +107,6 @@ class AgentResponse:
             "timings_ms": dict(self.timings_ms),
             "generation": self.generation.to_dict() if self.generation else None,
             "supported": self.supported,
+            "diagnostics": dict(self.diagnostics),
             "claims": [asdict(claim) for claim in self.claims],
         }, secrets)

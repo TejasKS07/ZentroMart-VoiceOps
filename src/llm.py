@@ -20,12 +20,13 @@ class LLMError(RuntimeError):
 class ChatCompletionClient:
     max_attempts = 3
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, *, request_limiter=None):
         if not settings.llm_endpoint or not settings.llm_model:
             raise ConfigurationError("Set LLM_ENDPOINT and LLM_MODEL before making LLM requests")
         if not settings.llm_calls_enabled:
             raise ConfigurationError("LLM calls are deferred. Set LLM_CALLS_ENABLED=true only when ready for the final project evaluation.")
         self.settings = settings
+        self.request_limiter=request_limiter
 
     def complete(self, messages: list[dict[str, str]], *,
                  parameters: dict[str, Any] | None = None) -> GenerationTrace:
@@ -40,17 +41,25 @@ class ChatCompletionClient:
         body = {"model": self.settings.llm_model, "messages": messages, **params}
         started = time.perf_counter()
         for attempt in range(1, self.max_attempts + 1):
+            lease=self.request_limiter.acquire() if self.request_limiter else None
             try:
                 response = requests.post(self.settings.llm_endpoint, headers=headers, json=body,
                                          timeout=self.settings.timeout_seconds, allow_redirects=False)
             except requests.RequestException:
+                if self.request_limiter:self.request_limiter.record(started=lease,kind='chat_completion',weight=1,status='connection_failed')
                 if attempt == self.max_attempts:
                     raise LLMError("LLM connection failed; check endpoint/network/credentials", code="connection_failed") from None
                 time.sleep(attempt)
                 continue
             status = response.status_code
+            if self.request_limiter:self.request_limiter.record(started=lease,kind='chat_completion',weight=1,status=status)
             if status in {408, 429, 500, 502, 503, 504} and attempt < self.max_attempts:
-                time.sleep(attempt)
+                if status==429:
+                    from .rate_limit import retry_delay
+                    delay=retry_delay(response)
+                    if self.request_limiter:self.request_limiter.cooldown(delay)
+                    else:time.sleep(delay)
+                else:time.sleep(attempt)
                 continue
             if status != 200:
                 raise LLMError(f"LLM request returned HTTP {status}", code=f"http_{status}")

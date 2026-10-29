@@ -1,0 +1,41 @@
+{
+  "status": "needs_repeat",
+  "transcript": "",
+  "spoken_text": "I could not hear a clear message. Please record a shorter message again.",
+  "response": {
+    "schema_version": "1.0",
+    "decision": "clarify",
+    "reply": "I could not hear a clear message. Please record a shorter message again.",
+    "language": "en",
+    "evidence_ids": [],
+    "evidence": [],
+    "retrieved_evidence_ids": [],
+    "tool_events": [],
+    "timings_ms": {},
+    "generation": null,
+    "supported": null,
+    "diagnostics": {
+      "code": "decode_failed",
+      "status": "needs_input",
+      "waiting_for": [
+        "clear_audio"
+      ],
+      "tools": [],
+      "llm_used": false
+    },
+    "claims": []
+  },
+  "error": {
+    "stage": "audio",
+    "code": "decode_failed",
+    "message": "The recording could not be decoded. Please try another file."
+  },
+  "timings_ms": {
+    "tts": 830.2327960000184,
+    "total": 854.3836700000611
+  },
+  "audio_seconds": null,
+  "voice_complete": false,
+  "clip_id": "clip-0001",
+  "input_sha256": "040f3f316319e64628b4fb26ef26a012911db96654b0285a78870001e8402c1e"
+}

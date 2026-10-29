@@ -1,0 +1,22 @@
+{
+  "evidence": [
+    {
+      "evidence_id": "CPN-1",
+      "source": "kb/pol_coupons_offers.md",
+      "text": "## [CPN-1] One coupon per order\nOnly 1 coupon can be applied per order. Coupons cannot be combined, added after the order is placed, or exchanged for cash.",
+      "metadata": {
+        "doc_id": "POL-CPN",
+        "title": "Coupons and offers",
+        "doc_type": "policy",
+        "audience": "customer",
+        "language": "en",
+        "version": "1.2",
+        "effective_from": "2026-06-01",
+        "status": "current"
+      }
+    }
+  ],
+  "evidence_ids": [
+    "CPN-1"
+  ]
+}

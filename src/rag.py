@@ -15,7 +15,7 @@ from .schemas import AgentResponse, CustomerInput, Decision, GroundedClaim
 
 RAG_PROMPT = (Path(__file__).parent / "prompts/rag.txt").read_text(encoding="utf-8").replace(
     "{reference_date}", REFERENCE_DATE.strftime("%d %B %Y"))
-RAG_PROMPT_VERSION = "rag-v1"
+RAG_PROMPT_VERSION = "rag-v2"
 RAG_PROMPT_SHA256 = hashlib.sha256(RAG_PROMPT.encode()).hexdigest()
 
 
@@ -28,7 +28,7 @@ class RagAgent:
         self.client, self.index, self.top_k = client, index, top_k
 
     def respond(self, customer: CustomerInput, *, previous_topic: str = "", delivered_on=None,
-                operations=None, calculations=()) -> AgentResponse:
+                operations=None, calculations=(), conversation_state=None) -> AgentResponse:
         started = time.perf_counter()
         verified = operations.gateway.order_facts(customer.session_id) if operations else None
         if verified and verified.get("delivered_on"):
@@ -46,6 +46,8 @@ class RagAgent:
                     context[evidence_id] = self.index.by_id[evidence_id]
         payload = {"customer_message": customer.text, "sources": [asdict(e) for e in context.values()],
                    "verified_order_facts": verified, "calculations": calculation_context}
+        if conversation_state is not None:
+            payload["conversation_state"] = conversation_state
         if operations:
             payload = operations.gateway.sanitize(customer.session_id, payload)
         retrieval_ms = (time.perf_counter()-started)*1000

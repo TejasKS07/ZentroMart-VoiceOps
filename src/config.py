@@ -27,6 +27,9 @@ class Settings:
     gnani_tts_model: str = "timbre-v2.5"
     gnani_tts_voice: str = "Kaveri"
     gnani_language: str = "en-IN"
+    gnani_stt_model: str = "prisma-v3.0"
+    embedding_provider: str = 'gemini'
+    embedding_api_key: str = field(default='',repr=False)
     timeout_seconds: float = 45
     llm_temperature: float | None = None
     llm_reasoning_effort: str = ""
@@ -88,6 +91,12 @@ class Settings:
         enabled = value("LLM_CALLS_ENABLED", "false").lower()
         if enabled not in {"true", "false"}:
             raise ConfigurationError("LLM_CALLS_ENABLED must be true or false")
+        embeddings=value('EMBEDDING_PROVIDER','gemini').lower()
+        if embeddings not in {'gemini','local'}:
+            raise ConfigurationError('EMBEDDING_PROVIDER must be gemini or local')
+        embedding_key=value('EMBEDDING_API_KEY')
+        if not embedding_key and endpoint and urlsplit(endpoint).hostname=='generativelanguage.googleapis.com':
+            embedding_key=value('LLM_API_KEY')
         return cls(
             dataset_dir=path("DATASET_DIR", "Dataset"),
             runtime_dir=path("RUNTIME_DIR", "runtime"),
@@ -96,6 +105,8 @@ class Settings:
             gnani_tts_model=value("GNANI_TTS_MODEL", "timbre-v2.5"),
             gnani_tts_voice=value("GNANI_TTS_VOICE", "Kaveri"),
             gnani_language=value("GNANI_LANGUAGE", "en-IN"), timeout_seconds=timeout,
+            gnani_stt_model=value("GNANI_STT_MODEL", "prisma-v3.0"),
+            embedding_provider=embeddings,embedding_api_key=embedding_key,
             llm_temperature=temperature, llm_reasoning_effort=effort,
             llm_calls_enabled=enabled == "true",
         )
@@ -117,6 +128,8 @@ class Settings:
             "llm_key_present": bool(self.llm_api_key),
             "gnani_key_present": bool(self.gnani_api_key),
             "llm_calls_enabled": self.llm_calls_enabled,
+            "embedding_provider": self.embedding_provider,
+            "embedding_key_present": bool(self.embedding_api_key),
             "tts_model": self.gnani_tts_model, "tts_voice": self.gnani_tts_voice,
         }
 
