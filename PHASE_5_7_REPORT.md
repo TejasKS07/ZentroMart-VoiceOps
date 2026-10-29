@@ -44,3 +44,5 @@ Among accepted RAG outputs, the provisional judge found 15 original fact failure
 `report.pdf` has four visually inspected pages. `demo.mp4` is 27.854 seconds of actual saved agent replies and synthetic caller speech, showing a policy answer, contextual wallet follow-up and successful ticket handover. It is labelled artifact playback and uses deterministic policy replies, not live generated policy answers. `zentromart_voiceops.zip` packages the source and actual sample evidence through an explicit allowlist, excluding Dataset, .env, credentials, private runtime/history and virtual environments.
 
 The user has no recordings, so own-recorded English/Hindi/Hinglish testing is unavailable. Human semantic spot-checks, extra holdout grading, public-repository synchronization and website deployment have not been performed. Deployment remains a later step as requested. Keep these limitations with the measured results.
+
+Release decision: the user explicitly chose to keep the release local. Source is committed on the local `codex/voiceops-completion` branch; nothing was pushed.

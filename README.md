@@ -535,3 +535,6 @@ See [the final phase report](PHASE_5_7_REPORT.md), [four-page report](report.pdf
 `zentromart_voiceops.zip` is the local submission package. Public repository
 synchronization and deployment have not been performed. Human-recorded speech,
 human semantic review and unseen-test performance remain unverified.
+
+The user chose to keep this release local. The completed source is committed on
+`codex/voiceops-completion`; nothing was pushed to the public repository.

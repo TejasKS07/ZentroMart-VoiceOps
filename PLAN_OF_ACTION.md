@@ -1,6 +1,6 @@
 # VoiceOps 2026 — Plan of action
 
-Prepared: 28 October 2026. Updated: 30 October 2026. Phases 0–6 are implemented locally. Phase 7 local evaluation, four-page report, demo and release package are prepared; public source synchronization is pending. Human-recorded speech testing remains unavailable; the user has no recordings.
+Prepared: 28 October 2026. Updated: 30 October 2026. Phases 0–6 are implemented locally. Phase 7 local evaluation, four-page report, demo and release package are prepared; public release is deferred at the user’s request. Human-recorded speech testing remains unavailable; the user has no recordings.
 
 ## 1. Objective and build priorities
 
@@ -256,7 +256,7 @@ Store generated indexes, recordings, tickets, and evaluation runs outside tracke
 ## 7. Submission checklist
 
 - [x] All four stages implemented; Step 1 and Step 2 measurements retained.
-- [ ] Synchronize the updated source and installation/run instructions to the existing public repository (prepared locally).
+- [ ] Public repository synchronization is deferred: the user chose to keep the completed release local.
 - [x] Fresh installation can run against an externally supplied dataset.
 - [x] Audio-folder runner saves text, speech, and the document chunks used.
 - [x] `.env.example` contains variable names and placeholders only.
