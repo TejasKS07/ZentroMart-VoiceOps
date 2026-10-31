@@ -14,4 +14,3 @@ def language_of(text: str, previous: str) -> str:
     if re.search(r"\b(i|my|the|how|what|can|please|hello|hi|thanks|order|refund|cancel)\b", text, re.I):
         return "en"
     return previous
-
