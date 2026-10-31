@@ -31,3 +31,9 @@ class RateLimitTests(unittest.TestCase):
     def test_oversized_batch_is_rejected_instead_of_overrunning_rpm(self):
         limit=WeightedRateLimiter()
         with self.assertRaises(ValueError):limit.acquire(100)
+
+    def test_approved_attempt_cap_counts_reservations_before_network_calls(self):
+        limit=WeightedRateLimiter(max_attempts=2)
+        limit.acquire();limit.acquire()
+        with self.assertRaisesRegex(RuntimeError,'budget exhausted'):limit.acquire()
+        self.assertEqual(limit.summary()['reserved_attempts'],2)

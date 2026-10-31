@@ -17,7 +17,7 @@ def run_chat(agent, *, debug=False):
     last_result = None
     mode = "live_policy" if agent.rag else "offline"
     print("Stateful support chat. " + ("Live RAG is enabled for policy questions." if agent.rag else
-          "Offline mode: local rules and tools are available; Gemini is disabled."))
+          "Offline mode: local rules and tools are available; AI generation is disabled."))
     print(HELP)
     try:
         while True:

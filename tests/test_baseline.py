@@ -92,6 +92,31 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(error.exception.code, "http_401")
         self.assertNotIn("secret", str(error.exception))
 
+    @patch('requests.post')
+    def test_structured_response_schema_is_requested_without_changing_the_answer(self,post):
+        post.return_value=Mock(status_code=200)
+        post.return_value.json.return_value={'choices':[{'message':{'content':'{"value":1}'},'finish_reason':'stop'}]}
+        schema={'type':'object','properties':{'value':{'type':'integer'}},'required':['value'],'additionalProperties':False}
+        result=ChatCompletionClient(self.settings()).complete([],response_schema=schema)
+        self.assertEqual(post.call_args.kwargs['json']['response_format']['json_schema']['schema'],schema)
+        self.assertTrue(post.call_args.kwargs['json']['response_format']['json_schema']['strict'])
+        self.assertEqual(result.raw_output,'{"value":1}')
+
+    @patch('requests.post')
+    def test_gemma_four_uses_native_text_api_and_excludes_thought_parts(self,post):
+        from dataclasses import replace
+        settings=replace(self.settings(),llm_model='gemma-4-26b-a4b-it',llm_endpoint='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',llm_reasoning_effort='minimal')
+        post.return_value=Mock(status_code=200)
+        post.return_value.json.return_value={'candidates':[{'content':{'parts':[{'text':'private thought','thought':True},{'text':'{"value":1}'}]},'finishReason':'STOP'}],
+            'modelVersion':'gemma-4-26b-a4b-it','usageMetadata':{'promptTokenCount':10,'candidatesTokenCount':4,'totalTokenCount':14}}
+        result=ChatCompletionClient(settings).complete([{'role':'system','content':'role'},{'role':'user','content':'question'}],response_schema={'type':'object'})
+        self.assertTrue(post.call_args.args[0].endswith('/models/gemma-4-26b-a4b-it:generateContent'))
+        body=post.call_args.kwargs['json']
+        self.assertEqual(body['systemInstruction']['parts'][0]['text'],'role')
+        self.assertEqual(body['generationConfig']['thinkingConfig']['thinkingLevel'],'MINIMAL')
+        self.assertEqual(result.raw_output,'{"value":1}')
+        self.assertEqual(result.finish_reason,'stop')
+
     def test_generation_parameters_and_explicit_environment_file(self):
         with TemporaryDirectory() as folder:
             path = Path(folder) / "settings.env"

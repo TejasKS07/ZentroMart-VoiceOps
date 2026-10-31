@@ -60,6 +60,25 @@ class GeminiEmbeddingTests(unittest.TestCase):
 
 
 class BatchJudgeTests(unittest.TestCase):
+    def test_malformed_judge_output_is_preserved_and_remains_unresolved(self):
+        from src.evaluation.judge import grade_run_batched
+        from src.evaluation.cases import load_questions
+        from src.config import PROJECT_ROOT
+        from src.schemas import GenerationTrace
+        cases=load_questions(PROJECT_ROOT/'Dataset')[:1]
+        with TemporaryDirectory() as folder:
+            root=Path(folder)
+            (root/'manifest.json').write_text(json.dumps({'case_ids':[cases[0].case_id]}))
+            (root/'results.jsonl').write_text(json.dumps({'case_id':cases[0].case_id,'status':'completed','decision_correct':True,'response':{'reply':'saved reply'}})+'\n')
+            client=Mock();client.settings=Settings.load({'LLM_MODEL':'test'})
+            client.complete.return_value=GenerationTrace('not a valid judgement','test')
+            summary=grade_run_batched(root,cases,client)
+            batch=json.loads((root/'judge_batches.jsonl').read_text())
+            self.assertEqual(batch['generation']['raw_output'],'not a valid judgement')
+            self.assertEqual(batch['status'],'unresolved')
+            self.assertEqual(summary['unresolved'],1)
+            self.assertIsNone(summary['accuracy'])
+
     def test_ten_answers_share_one_judge_request(self):
         from src.evaluation.judge import grade_run_batched
         from src.evaluation.cases import load_questions

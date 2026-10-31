@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.1",
+  "run_status": "finished",
+  "cases": 6,
+  "processed": 6,
+  "completed": 6,
+  "failed": 0,
+  "decision_match_rate": 0.5,
+  "fact_correctness": "not_scored"
+}

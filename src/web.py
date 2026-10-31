@@ -50,6 +50,7 @@ class WebApplication:
     def status(self):
         return {"status": "ready", "mode": "live_policy" if self.agent.rag else "offline",
                 "generation_enabled": self.agent.rag is not None, "voice_enabled": self.voice is not None and bool(shutil.which('ffmpeg')),
+                "model": self.agent.rag.client.settings.llm_model if self.agent.rag else None,
                 "languages": ["English", "हिंदी", "Hinglish"]}
 
     def new_session(self, previous=None, owner=None):
@@ -289,7 +290,7 @@ def serve(agent, *, host="127.0.0.1", port=8000, speech=None, history_path=None)
     from .speech.engine import VoiceEngine
     with SupportServer((host, port), WebApplication(agent, voice=VoiceEngine(agent,speech) if speech else None,history_path=history_path)) as server:
         print(f"ZentroMart workspace: http://localhost:{server.server_address[1]}", flush=True)
-        print("Press Ctrl+C to stop. " + ("Live policy generation enabled." if agent.rag else "Offline mode; Gemini disabled."), flush=True)
+        print("Press Ctrl+C to stop. " + ("Live policy generation enabled." if agent.rag else "Offline mode; AI generation disabled."), flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

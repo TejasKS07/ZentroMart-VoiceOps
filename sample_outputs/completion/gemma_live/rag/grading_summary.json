@@ -1,0 +1,11 @@
+{
+  "method": "provisional_model_judge",
+  "judge_batch_size": 10,
+  "cases": 6,
+  "correct": 1,
+  "unresolved": 1,
+  "status": "incomplete",
+  "accuracy": null,
+  "correctness_lower_bound": 0.16666666666666666,
+  "note": "Batched model-judged practice score; requires human spot-checking, not an organizer score."
+}

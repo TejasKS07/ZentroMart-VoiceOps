@@ -13,7 +13,7 @@ def main():
                if v and 'KEY' in k.upper() and len(str(v)) >= 8]
     files = [ROOT / name for name in (
         'README.md', 'PLAN_OF_ACTION.md', 'PHASE_2_3_REPORT.md', 'PHASE_4_REPORT.md',
-        'PHASE_5_7_REPORT.md', '.env.example', '.gitignore', '.gitattributes', 'requirements.txt',
+        'PHASE_5_7_REPORT.md', 'PS_COMPLETION.md', '.env.example', '.gitignore', '.gitattributes', 'requirements.txt',
         'run.py', 'report.pdf', 'demo.mp4')]
     for directory in ('src', 'web', 'tests', 'scripts', 'sample_outputs'):
         files.extend(p for p in (ROOT / directory).rglob('*') if p.is_file()

@@ -29,6 +29,15 @@ class ConversationTests(unittest.TestCase):
     def say(self, text, session="one"):
         return self.agent.respond(CustomerInput(text, session))
 
+    def test_policy_values_follow_documents_instead_of_fixed_reply_numbers(self):
+        from dataclasses import replace
+        rules=self.ops.calculator.rules
+        self.ops.calculator.rules=replace(rules,sections={**rules.sections,
+            'CPN-1':rules.sections['CPN-1'].replace('Only 1 coupon','Only 2 coupon'),
+            'DEL-3':rules.sections['DEL-3'].replace('up to 3 delivery attempts','up to 4 delivery attempts')})
+        self.assertIn('2 coupon',self.say('How many coupons can I use?').reply)
+        self.assertIn('4 delivery attempts',self.say('What if I am not at home?',session='delivery').reply)
+
     def verify(self, order="18599253", proof="4265", session="one"):
         self.say(f"My order number is {order}", session)
         return self.say(f"Last four digits {proof}", session)

@@ -31,7 +31,8 @@ def evaluate(settings, index, output_dir: Path, *, judge=False, progress=None):
     from ..rag import RagAgent
     client=ChatCompletionClient(settings)
     secrets=(settings.llm_api_key,settings.gnani_api_key)
-    summary=run_questions(cases(),RagAgent(client,index).respond,output_dir,secrets=secrets,
+    from ..dataset import PublicKnowledge
+    summary=run_questions(cases(),RagAgent(client,index,knowledge=PublicKnowledge.load(settings.dataset_dir)).respond,output_dir,secrets=secrets,
         metadata={'stage':'authored_holdout','frozen_before_generation':True,'requested_model':settings.llm_model,'generation_parameters':settings.generation_parameters()},progress=progress)
     if judge:summary['grading']=grade_run(output_dir,cases(),client,secrets=secrets,progress=progress)
     return summary

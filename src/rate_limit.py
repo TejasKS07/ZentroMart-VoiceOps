@@ -26,16 +26,19 @@ def retry_delay(response, fallback=60):
 
 
 class WeightedRateLimiter:
-    def __init__(self, *, capacity=90, window=60, log_path=None, clock=time.monotonic, sleep=time.sleep):
+    def __init__(self, *, capacity=90, window=60, log_path=None, clock=time.monotonic, sleep=time.sleep,max_attempts=None):
         self.capacity,self.window=capacity,window
         self.clock,self.sleep=clock,sleep
         self.events=deque();self.lock=RLock();self.blocked_until=0
         self.peak=0;self.records=[];self.log_path=log_path
+        self.max_attempts=max_attempts;self.issued=0
 
     def acquire(self,weight=1):
         if not 1<=weight<=self.capacity:raise ValueError('Request weight exceeds the RPM safety budget')
         while True:
             with self.lock:
+                if self.max_attempts is not None and self.issued>=self.max_attempts:
+                    raise RuntimeError('Approved provider-attempt budget exhausted')
                 now=self.clock()
                 while self.events and self.events[0][0]<=now-self.window:self.events.popleft()
                 total=sum(item[1] for item in self.events)
@@ -48,6 +51,7 @@ class WeightedRateLimiter:
                             delay=max(delay,started+self.window-now+0.01);break
                 if delay<=0:
                     self.events.append((now,weight));self.peak=max(self.peak,total+weight)
+                    self.issued+=1
                     return datetime.now(timezone.utc).isoformat()
             self.sleep(min(delay,1))
 
@@ -64,6 +68,7 @@ class WeightedRateLimiter:
     def summary(self):
         with self.lock:
             return {'user_rpm_limit':100,'safety_capacity':self.capacity,'window_seconds':self.window,
+                'approved_attempt_limit':self.max_attempts,'reserved_attempts':self.issued,
                 'peak_quota_weight_in_window':self.peak,'http_attempts':len(self.records),
                 'successful_http_requests':sum(r['status']==200 for r in self.records),
                 'embedding_http_requests':sum(r['kind']=='embedding' for r in self.records),

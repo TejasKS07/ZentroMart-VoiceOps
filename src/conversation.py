@@ -13,6 +13,7 @@ from threading import RLock
 import time
 
 from .redaction import normalize_digits
+from .language import language_of
 from .schemas import AgentResponse, CustomerInput, Decision, GroundedClaim
 from .tools.gateway import VerificationError
 from .tools.operations import SupportOperations
@@ -38,19 +39,6 @@ class SessionState:
     turns: int = 0
     repair_count: int = 0
 
-
-def language_of(text: str, previous: str) -> str:
-    if re.search(r"(?:in|speak|reply in) english|angrezi|अंग्रेज़ी|अंग्रेजी", text, re.I):
-        return "en"
-    if re.search(r"hindi mein|हिंदी में|हिन्दी में", text, re.I):
-        return "hi" if re.search(r"[\u0900-\u097f]", text) else "hi-en"
-    if re.search(r"[\u0900-\u097f]", text):
-        return "hi"
-    if re.search(r"\b(mujhe|mera|meri|maine|hai|hain|ka|ki|kya|kab|kitne|aayega|sawaal|theek|achha|ise|kar|nahi|teesri)\b", text, re.I):
-        return "hi-en"
-    if re.search(r"\b(i|my|the|how|what|can|please|hello|hi|thanks|order|refund|cancel)\b", text, re.I):
-        return "en"
-    return previous
 
 
 def detect_intent(text: str) -> str:
@@ -525,9 +513,10 @@ class ConversationAgent:
                 return self._reply(state, "refuse", "The grocery cancellation cutoff has passed; cancellation is unavailable for this slot.", "इस स्लॉट के लिए ग्रॉसरी कैंसिल करने का समय बीत चुका है।", "Is grocery slot ka cancellation cutoff pass ho chuka hai.", ids=("CAN-3",))
             if facts["status"] not in {"shipped", "out_for_delivery", "delivery_attempted"}:
                 return self._reply(state, "refuse", "Cancellation is unavailable for the recorded order status; I can help with any applicable return or refund policy.", "दर्ज ऑर्डर स्थिति में कैंसिल उपलब्ध नहीं है; लागू रिटर्न या रिफ़ंड नीति में मदद कर सकता हूँ।", ids=("CAN-1", "CAN-2"))
-            return self._reply(state, "refuse", "A shipped order cannot be cancelled; you can refuse it at the door. For prepaid orders, the refund starts after warehouse return, usually 7 to 10 calendar days after the last delivery attempt.",
-                "शिप किया ऑर्डर कैंसिल नहीं हो सकता; दरवाज़े पर लेने से मना कर सकते हैं। प्रीपेड रिफ़ंड गोदाम वापसी पर शुरू होता है, आम तौर पर आख़िरी डिलीवरी प्रयास के 7 से 10 कैलेंडर दिनों बाद।",
-                "Shipped order cancel nahi ho sakta; door par lene se mana kar sakte hain. Prepaid refund warehouse return par start hota hai, usually last delivery attempt ke 7 se 10 calendar days baad.", ids=("CAN-2", "REF-1"))
+            low,high=self.operations.calculator.rules.rto_days
+            return self._reply(state, "refuse", f"A shipped order cannot be cancelled; you can refuse it at the door. For prepaid orders, the refund starts after warehouse return, usually {low} to {high} calendar days after the last delivery attempt.",
+                f"शिप किया ऑर्डर कैंसिल नहीं हो सकता; दरवाज़े पर लेने से मना कर सकते हैं। प्रीपेड रिफ़ंड गोदाम वापसी पर शुरू होता है, आम तौर पर आख़िरी डिलीवरी प्रयास के {low} से {high} कैलेंडर दिनों बाद।",
+                f"Shipped order cancel nahi ho sakta; door par lene se mana kar sakte hain. Prepaid refund warehouse return par start hota hai, usually last delivery attempt ke {low} se {high} calendar days baad.", ids=("CAN-2", "REF-1"))
         if intent == "damage" and facts:
             item = self._item(state, text, damage=True)
             if item is None:
@@ -588,6 +577,8 @@ class ConversationAgent:
 
     def _refund(self, sid, state):
         f = state.verified_facts
+        wallet_hours = self.operations.calculator.rules.refund_windows["wallet"].maximum
+        initiation_days = self.operations.calculator.rules.refund_initiation_days
         kind = "cancellation" if f["status"] == "cancelled" else "rto" if f["status"] == "returned_to_origin" else "return"
         result = self.operations.refund_status(sid, kind)
         v = result.values
@@ -607,13 +598,13 @@ class ConversationAgent:
         if v.get("initiated"):
             latest = self._date(v.get("latest_date"))
             rrn = f" RRN: {v['rrn']}." if v.get("rrn") else ""
-            return self._reply(state, "answer", f"The refund has been initiated; the maximum settlement date is {latest}." + rrn if v.get("latest_date") else "The refund has been initiated; Wallet settlement is within two hours, but the exact initiation time is not recorded." + rrn,
-                f"रिफ़ंड शुरू हो चुका है; अधिकतम निपटान तारीख {latest} है।" + rrn if v.get("latest_date") else "रिफ़ंड शुरू है; वॉलेट में दो घंटे के भीतर आता है, पर शुरू होने का सही समय दर्ज नहीं है।" + rrn,
-                f"Refund initiate ho chuka hai; maximum settlement date {latest} hai." + rrn if v.get("latest_date") else "Refund initiated hai; Wallet mein do ghante ke andar aata hai, exact initiation time recorded nahi hai." + rrn, ids=result.evidence_ids)
+            return self._reply(state, "answer", f"The refund has been initiated; the maximum settlement date is {latest}." + rrn if v.get("latest_date") else f"The refund has been initiated; Wallet settlement is within {wallet_hours} hours, but the exact initiation time is not recorded." + rrn,
+                f"रिफ़ंड शुरू हो चुका है; अधिकतम निपटान तारीख {latest} है।" + rrn if v.get("latest_date") else f"रिफ़ंड शुरू है; वॉलेट में {wallet_hours} घंटे के भीतर आता है, पर शुरू होने का सही समय दर्ज नहीं है।" + rrn,
+                f"Refund initiate ho chuka hai; maximum settlement date {latest} hai." + rrn if v.get("latest_date") else f"Refund initiated hai; Wallet mein {wallet_hours} ghante ke andar aata hai, exact initiation time recorded nahi hai." + rrn, ids=result.evidence_ids)
         if f.get("return_pickup_on") and not f.get("return_qc_passed_on") and not f["is_plus"]:
-            return self._reply(state, "answer", "Pickup is recorded, but quality check (QC) is pending; the refund starts within two business days of pickup once QC passes.",
-                "पिकअप दर्ज है, पर गुणवत्ता जाँच (QC) बाकी है; जाँच पास होने पर पिकअप के दो कार्यदिवसों के भीतर रिफ़ंड शुरू होता है।",
-                "Pickup recorded hai, quality check (QC) pending hai; QC pass hone par pickup ke do business days mein refund initiate hota hai.", ids=("RET-7", "REF-1"))
+            return self._reply(state, "answer", f"Pickup is recorded, but quality check (QC) is pending; the refund starts within {initiation_days} business days of pickup once QC passes.",
+                f"पिकअप दर्ज है, पर गुणवत्ता जाँच (QC) बाकी है; जाँच पास होने पर पिकअप के {initiation_days} कार्यदिवसों के भीतर रिफ़ंड शुरू होता है।",
+                f"Pickup recorded hai, quality check (QC) pending hai; QC pass hone par pickup ke {initiation_days} business days mein refund initiate hota hai.", ids=("RET-7", "REF-1"))
         method = f.get(kind + "_refund_method") or state.caller_fields.get("refund_method") or f.get("payment_method")
         if method == "cod":
             state.missing_fields = ("refund_method",)
@@ -621,10 +612,10 @@ class ConversationAgent:
         timeline = self.operations.calculator.refund_timeline(method, None).values
         state.missing_fields = ()
         window = f"{timeline['minimum']} to {timeline['maximum']} business days" if timeline["unit"] == "business_days" else f"instant, within {timeline['maximum']} hours"
-        initiation = "at pickup for Plus members" if f["is_plus"] else "within two business days of pickup once QC passes"
+        initiation = "at pickup for Plus members" if f["is_plus"] else f"within {initiation_days} business days of pickup once QC passes"
         return self._reply(state, "answer", f"Refund initiation is {initiation}; after initiation, {method} settlement takes {window}.",
-            f"रिफ़ंड {'Plus सदस्यों के लिए पिकअप पर' if f['is_plus'] else 'QC पास होने पर पिकअप के दो कार्यदिवसों के भीतर'} शुरू होता है; उसके बाद {method} में {'तुरंत, दो घंटे के भीतर' if timeline['unit'] == 'hours' else str(timeline['minimum']) + ' से ' + str(timeline['maximum']) + ' कार्यदिवस'} लगते हैं।",
-            f"Refund {'Plus ke liye pickup par' if f['is_plus'] else 'QC pass hone par pickup ke do business days mein'} initiate hota hai; uske baad {method} mein {window} lagte hain.", ids=("RET-7", "REF-1", "REF-2", "PLS-2"))
+            f"रिफ़ंड {'Plus सदस्यों के लिए पिकअप पर' if f['is_plus'] else f'QC पास होने पर पिकअप के {initiation_days} कार्यदिवसों के भीतर'} शुरू होता है; उसके बाद {method} में {f"तुरंत, {timeline['maximum']} घंटे के भीतर" if timeline['unit'] == 'hours' else str(timeline['minimum']) + ' से ' + str(timeline['maximum']) + ' कार्यदिवस'} लगते हैं।",
+            f"Refund {'Plus ke liye pickup par' if f['is_plus'] else f'QC pass hone par pickup ke {initiation_days} business days mein'} initiate hota hai; uske baad {method} mein {window} lagte hain.", ids=("RET-7", "REF-1", "REF-2", "PLS-2"))
 
     def _policy(self, sid, state, text, *, ids=()):
         state.missing_fields = ()
@@ -659,11 +650,14 @@ class ConversationAgent:
         # Explicit offline route inspection: preserve authoritative source text,
         # without pretending this extract is a measured multilingual LLM answer.
         if ids == ("CPN-1",):
-            return self._reply(state, "answer", "Only one coupon can be used per order.", "एक ऑर्डर में केवल एक कूपन इस्तेमाल कर सकते हैं।", "Ek order par sirf ek coupon use kar sakte hain.", ids=ids)
+            count=self.operations.calculator.rules.coupons_per_order
+            en='one' if count==1 else str(count);hi='एक' if count==1 else str(count);hinglish='ek' if count==1 else str(count)
+            return self._reply(state, "answer", f"Only {en} coupon can be used per order.", f"एक ऑर्डर में केवल {hi} कूपन इस्तेमाल कर सकते हैं।", f"Ek order par sirf {hinglish} coupon use kar sakte hain.", ids=ids)
         if ids == ("DEL-3",):
-            return self._reply(state, "answer", "The courier makes up to 3 delivery attempts; after a failed attempt, use the SMS to reschedule. After the third failure the parcel returns to the warehouse.",
-                "कूरियर अधिकतम 3 डिलीवरी प्रयास करता है; असफल प्रयास के बाद SMS से नया समय चुनें। तीसरी असफलता पर पार्सल गोदाम वापस जाता है।",
-                "Courier up to 3 delivery attempts karta hai; failed attempt ke baad SMS se reschedule karein. Third failure par parcel warehouse wapas jata hai.", ids=ids)
+            count=self.operations.calculator.rules.delivery_attempts
+            return self._reply(state, "answer", f"The courier makes up to {count} delivery attempts; after a failed attempt, use the SMS to reschedule. After {count} failed attempts the parcel returns to the warehouse.",
+                f"कूरियर अधिकतम {count} डिलीवरी प्रयास करता है; असफल प्रयास के बाद SMS से नया समय चुनें। {count} असफल प्रयासों के बाद पार्सल गोदाम वापस जाता है।",
+                f"Courier up to {count} delivery attempts karta hai; failed attempt ke baad SMS se reschedule karein. {count} failed attempts ke baad parcel warehouse wapas jata hai.", ids=ids)
         if ids:
             excerpt = "\n".join(self._sources[i].text for i in ids)
             return self._reply(state, "answer", excerpt, excerpt, excerpt, ids=ids, code="offline_source_extract")

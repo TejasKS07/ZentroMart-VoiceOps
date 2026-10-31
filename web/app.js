@@ -83,7 +83,7 @@ function setMode(data) {
   const live = data.generation_enabled;
   $('sidebar-mode').textContent = live ? 'Policy generation enabled' : 'Offline support is ready';
   $('mode-title').textContent = live ? 'Live policy answers enabled' : 'Working in offline mode';
-  $('mode-description').textContent = live ? 'Policy questions can use the configured AI model. Order tools stay local.' : 'Local rules and order tools are available. Gemini generation is disabled.';
+  $('mode-description').textContent = live ? `Policy answers use ${data.model || 'the configured AI model'}. Order tools stay local.` : 'Local rules and order tools are available. AI generation is disabled.';
 }
 
 function resetDetails() {

@@ -5,6 +5,23 @@ deterministic policy calculations, stateful conversation, Gnani speech, an audio
 runner, and a local dashboard with saved chat history.
 See [the action plan](PLAN_OF_ACTION.md).
 
+The current release uses **Gemma 4 31B (`gemma-4-31b-it`)** for language
+responses, through Google's native API. [Google's pricing table](https://ai.google.dev/gemini-api/docs/pricing#gemma-4)
+lists Gemma input/output as free. Gnani speech and uncached Gemini Embedding 1
+requests have separate account terms. No new embedding calls were made in the
+completion check.
+
+The source repository is [TejasKS07/ZentroMart-VoiceOps](https://github.com/TejasKS07/ZentroMart-VoiceOps).
+The updated release is kept locally on `codex/voiceops-completion` as requested;
+these latest changes have not been pushed. See [PS completion mapping](PS_COMPLETION.md).
+
+```bash
+# After setup, with local keys and an existing index:
+LLM_CALLS_ENABLED=true python -m src web --live
+# Open http://localhost:8000
+```
+
+
 The current retrieval model is **Google Gemini Embedding 1
 (`gemini-embedding-001`, 768 dimensions)**. Vectors stay in the local index;
 embedding creation/search use the Google API. Earlier E5 retrieval measurements
@@ -213,10 +230,14 @@ explicit cross-references, KB rules and agent guides. Candidates and enriched
 context are reported separately. These contextual additions improve coverage at
 the cost of extra input tokens during the final live run.
 
-`RagAgent` records actually cited source chunks and per-claim evidence IDs,
-rejects unknown citations and unsupported digit-form numeric claims, and permits explicit
-abstention. These structural/numeric checks do not prove semantic correctness;
-the saved final evaluation measures generated-answer quality separately.
+`RagAgent` requests a five-field structured reply and records its original used
+chunks. Source IDs and language are constrained by the request schema. The actual
+reply is checked for unsupported digit-form quantities and contradictory calculated
+dates; explicit abstention is supported. Reply-level provenance replaces duplicated
+model claim annotations. For an unambiguous warranty product, the agent may append
+the catalog duration automatically and rejects a contradictory explicit duration.
+Raw model text remains separate and unchanged. These checks do not prove semantic
+correctness; the saved evaluations measure quality separately.
 
 The Phase 3 API is `SupportOperations(dataset_dir, runtime_dir)`:
 
@@ -327,7 +348,7 @@ metrics; these checks are not semantic answer accuracy. Partial outputs survive
 interruptions, and persistent live service failures halt the run.
 
 The saved local replay completed all 96 turns with matching expected decisions
-and tool names/counts, across all 23 scenarios. The current 124-test suite includes
+and tool names/counts, across all 23 scenarios. The current 137-test suite includes
 session/order isolation, language switches, privacy, clarification, escalation,
 ticket failure and replay regressions. See [the Phase 4 report](PHASE_4_REPORT.md)
 for artifacts and limitations.
@@ -492,16 +513,19 @@ settings with each frozen baseline/RAG comparison.
 - Live smoke reports: see `runtime/smoke/*/checks.json` for timestamped results.
 - Local multilingual retrieval, source provenance and Phase 3 services: implemented.
 - Phase 4 conversation controller and ordered replay: implemented.
-- 124 local tests pass, including speech, history, shared RPM pacing, batched embeddings, grading contracts and HTTP integration tests.
+- 137 local tests pass, including speech, history, shared RPM pacing, batched embeddings, grading contracts and HTTP integration tests.
 - All 23 practice conversations / 96 turns pass decision and tool-name/count checks; semantic accuracy remains unscored.
 - Gnani speech, batch processing, dashboard playback and saved chat history are implemented.
 - Fresh dependency installation and execution with an external dataset passed.
 - Final Gemini generation/grading uses the selected 234-call scope. Saved results
   and limitations accompany the release; model grades remain provisional.
 
-The configured hosted model is `gemini-3.5-flash-lite`: it responded successfully while
-`gemini-3.8-flash` reported temporary overload. Use the same available model for
-the Step 1/Step 2 comparison. Keys were moved from the example into ignored `.env`.
+The configured hosted model is now `gemma-4-31b-it`, with minimal thinking,
+temperature 0.2 and a 90-second timeout in the example configuration. The adapter
+uses Google's native `generateContent` API for hosted Gemma 4 and excludes thought
+parts from customer-facing output. The older full benchmark used
+`gemini-3.5-flash-lite`; its scores are historical. Keep model/settings fixed in
+any new baseline/RAG comparison. Keys remain only in ignored local `.env`.
 
 ## Integration references
 
@@ -510,13 +534,14 @@ the Step 1/Step 2 comparison. Keys were moved from the example into ignored `.en
 - [Official Gnani SDK](https://github.com/Gnani-AI-Mintlify/Gnani-Vachana/blob/main/README.md) and [published package](https://pypi.org/project/gnani-vachana/).
 - [python-dotenv](https://pypi.org/project/python-dotenv/) for local `.env` support.
 
-## Frozen final results and local deliverables
+## Historical full results and local deliverables
 
 | Input | Prompt-only provisional pass | RAG provisional pass |
 | --- | ---: | ---: |
 | Original text | 7/52 (13.5%) | 24/52 (46.2%) |
 | ASR-like text | 8/52 (15.4%) | 30/52 (57.7%) |
 
+These are the older Gemini 3.5 Flash-Lite benchmark scores, not current Gemma scores.
 The answer-quality target was not met. RAG had 11 original and 10 ASR contract
 failures; all remain in the denominator. These are provisional model grades,
 without human review. Gemini candidate recall@12 was 92.2% and enriched-context
@@ -538,3 +563,36 @@ human semantic review and unseen-test performance remain unverified.
 
 The user chose to keep this release local. The completed source is committed on
 `codex/voiceops-completion`; nothing was pushed to the public repository.
+
+## Completion validation - 1 November 2026
+
+- 137 regression tests and all 96 practice conversation decision/tool checks pass.
+- The new check used exactly 20 LLM attempts (all Gemma 4), 2 Gnani attempts and
+  zero embedding calls. The independently measured peak was 10 LLM requests per
+  rolling minute, below 100 RPM. No additional calls were made after the cap.
+- A six-case Gemma 4 26B comparison exposed four contract rejections and one service
+  failure in RAG; the semantic score has one unresolved case and is not reported as
+  accuracy. Its raw outputs and failed judge batches are preserved.
+- The final Gemma 4 31B model completed three live contract smoke cases. A separate
+  zero-call replay through catalog completion passed their required literal facts.
+  Neither result is a full practice or organizer accuracy estimate. Full Gemma
+  benchmarking and human semantic review have not been performed.
+- Model failures now return audible recovery while remaining failed support turns.
+  Silence, ambiguous IDs and synthesis retries retain honest completion status.
+- A real synthetic spoken handover completed STT, session routing, ticket creation
+  and TTS. Human voice recordings are optional in the PS and remain untested.
+
+The four-page report, 27.854-second demo, source, actual sample outputs and
+`zentromart_voiceops.zip` are the local PS deliverables. The original PS is
+unchanged. Public repository synchronization and deployment remain deferred by
+request. To verify the ZIP without API calls, install Poppler (`pdfinfo`) alongside
+ffmpeg, then run:
+
+```bash
+python scripts/verify_submission.py
+```
+
+Report regeneration is optional and additionally needs `reportlab` and DejaVu Sans:
+`python scripts/build_report.py`. It reads shipped sample evidence and makes no
+provider calls. The capped-live-check script is a preserved, single-run experiment;
+its marker/budget prevents restarting it as a new unauthorized run.

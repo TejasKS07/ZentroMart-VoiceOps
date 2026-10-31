@@ -16,7 +16,7 @@ BASELINE_PROMPT_SHA256 = hashlib.sha256(BASELINE_PROMPT.encode()).hexdigest()
 
 
 class CompletionClient(Protocol):
-    def complete(self, messages: list[dict[str, str]]) -> GenerationTrace: ...
+    def complete(self, messages: list[dict[str, str]], *, response_schema: dict | None = None) -> GenerationTrace: ...
 
 
 class AgentOutputError(ValueError):

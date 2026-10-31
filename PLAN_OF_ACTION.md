@@ -1,6 +1,6 @@
 # VoiceOps 2026 — Plan of action
 
-Prepared: 28 October 2026. Updated: 30 October 2026. Phases 0–6 are implemented locally. Phase 7 local evaluation, four-page report, demo and release package are prepared; public release is deferred at the user’s request. Human-recorded speech testing remains unavailable; the user has no recordings.
+Prepared: 28 October 2026. Updated: 1 November 2026. Phases 0-7 are implemented and packaged locally. Public release and deployment remain deferred by the user's instruction. See PS_COMPLETION.md for the source-to-brief mapping and explicit quality limits.
 
 ## 1. Objective and build priorities
 
@@ -63,7 +63,7 @@ The schedule below assumes approximately ten focused working days for one develo
 | 2. RAG | Days 2–3 | Parse metadata, preserve sections/tables, embed, retrieve, resolve authority, cite evidence | Re-run identical questions; record improvement and retrieval misses |
 | 3. Tools and calculations | Day 4 | Wrap supplied tools, verification control, catalog/pincode lookup, date and refund calculations | Privacy, date boundaries, and failed-action checks pass |
 | 4. Conversation | Days 5–6 | Session state, follow-ups, topic/order switching, one-question clarification, escalation | All 23 conversations replay with per-turn results |
-| 5. Voice | Day 7 | Gnani STT/TTS adapters, audio normalization, multilingual speech, recovery | Own recorded audio produces grounded text and playable speech |
+| 5. Voice | Day 7 | Gnani STT/TTS adapters, audio normalization, multilingual speech, recovery | Synthetic test audio produces grounded text and playable speech; own recordings are optional |
 | 6. Batch runner and demo interface | Day 8 | Audio-folder command, output artifacts, session grouping, recording/playback interface | Fresh process handles a mixed audio batch and saves required evidence |
 | 7. Hardening and submission | Days 9–10 | Regression runs, fresh-install check, report, demo, ZIP | Submission checklist complete; reported scores match saved runs |
 
@@ -287,3 +287,29 @@ credential-free release ZIP. Keep the website local for later deployment.
 - [Gnani's official Python SDK README](https://github.com/Gnani-AI-Mintlify/Gnani-Vachana/blob/main/README.md), checked 28 October 2026 for the file-based STT/TTS integration path. Actual account/model compatibility still requires a live smoke test.
 
 Final evaluation: 234 successful HTTP requests, 248 attempts including 14 rate-limit responses; peak weighted rolling-minute usage 70. Original provisional baseline/RAG: 7/52 and 24/52; ASR: 8/52 and 30/52. Gemini candidate recall@12: 92.2%; enriched context recall: 100%. Answer-quality target not met. See `PHASE_5_7_REPORT.md` and the frozen sample outputs.
+
+
+## Completion review - 1 November 2026
+
+All local implementation and PS artifacts are prepared. The configured language
+model is now Gemma 4 31B; Google-hosted Gemma requests use the native text API.
+The final source passes 137 regression tests and all 96 decision/tool checks
+across 23 conversations. Context selection retains 100% labelled evidence
+coverage while reducing average context to 26.4/26.6 chunks.
+
+The user authorized a separate capped follow-up. Exactly 20 LLM attempts (all
+Gemma 4), 2 Gnani attempts and no embedding calls were used, with a measured
+peak of 10 LLM requests per rolling minute. The six-case 26B check exposed
+format/citation and service failures; its score remains unresolved. After the
+reply contract change, 31B completed three live smoke cases. A zero-call replay
+through final catalog completion passed the selected required literal facts.
+The old full 52-case benchmark and all failed outputs remain unchanged.
+
+The report distinguishes these experiments rather than implying a new full
+Gemma accuracy score. Warranty duration comes from the public catalog; model
+annotations no longer have to duplicate every reply sentence. Unknown citations,
+unsupported digits and contradictory deterministic dates still fail safely.
+Voice failures now receive an audible explanation without counting as successful
+support. Human recordings are optional under the PS, not a missing requirement.
+No human semantic review or unseen-test performance is claimed. Public upload
+remains deferred, and nothing has been pushed or deployed.

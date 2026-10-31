@@ -95,6 +95,20 @@ class SpeechTests(unittest.TestCase):
         self.assertIn('CPN-1',[e.evidence_id for e in result.response.evidence])
         self.assertTrue({'stt','tts','agent','total'}<=set(result.timings_ms))
 
+    def test_agent_failure_gets_audible_honest_recovery_and_never_counts_as_success(self):
+        from src.speech.engine import restored_turn
+        self.agent.respond=Mock(side_effect=RuntimeError('private provider error'))
+        result=self.engine.process(self.clip,'failure')
+        self.assertEqual(result.status,'failed')
+        self.assertTrue(result.audio)
+        self.assertFalse(result.to_dict()['voice_complete'])
+        self.assertIn('grounded answer',result.response.reply)
+        self.assertNotIn('private provider error',json.dumps(result.to_dict()))
+        restored=restored_turn(result.to_dict())
+        self.engine.synthesize(restored)
+        self.assertEqual(restored.status,'failed')
+        self.assertFalse(restored.to_dict()['voice_complete'])
+
     def test_verification_words_are_redacted_and_tts_retry_does_not_verify_again(self):
         self.agent.respond(__import__('src.schemas',fromlist=['CustomerInput']).CustomerInput('order 18599253','one'))
         self.speech.transcribe.return_value='four two six five'

@@ -18,5 +18,6 @@ def create_agent(settings, *, dataset_dir=None, live=False, tool_dir=None):
         client = ChatCompletionClient(settings)
         embedder = create_embedder(settings)
         index = KnowledgeIndex.load(index_directory(settings), embedder, root)
-        rag = RagAgent(client, index)
+        from .dataset import PublicKnowledge
+        rag = RagAgent(client, index, knowledge=PublicKnowledge.load(root))
     return ConversationAgent(SupportOperations(root, tool_dir or settings.runtime_dir / "tools"), rag=rag)

@@ -1,139 +1,130 @@
-"""Create the four-page submission report from frozen evaluation evidence.
+"""Build the four-page PS report entirely from shipped, frozen sample evidence.
 
-Authoring dependency: reportlab (not needed to run the support application).
+Authoring needs reportlab and DejaVu Sans; the support app does not need reportlab.
 """
 from pathlib import Path
 from html import escape
 import json
-import statistics
-from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
+from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,PageBreak,Image
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 ROOT=Path(__file__).resolve().parents[1]
 def read(path):return json.loads(Path(path).read_text())
-report=read(read(ROOT/'runtime/final_evaluation/latest.json')['report'])
-analysis=read(read(ROOT/'runtime/release_analysis/latest.json')['report'])
-assert report['status']=='finished'
+history=read(ROOT/'sample_outputs/evaluation/summary.json')
+completion=ROOT/'sample_outputs/completion'
+account=read(completion/'accounting.json')
+comparison=read(completion/'gemma_live/comparison_summary.json')
+smoke=read(completion/'gemma_live/final_smoke.json')
+retrieval={v:read(completion/'retrieval'/v/'summary.json') for v in ('original','asr')}
+assert history['status']=='finished'
 font='/usr/share/fonts/truetype/dejavu/DejaVuSans'
-pdfmetrics.registerFont(TTFont('Body',font+'.ttf'))
-pdfmetrics.registerFont(TTFont('BodyBold',font+'-Bold.ttf'))
+pdfmetrics.registerFont(TTFont('Body',font+'.ttf'));pdfmetrics.registerFont(TTFont('BodyBold',font+'-Bold.ttf'))
 pdfmetrics.registerFontFamily('Body',normal='Body',bold='BodyBold')
 ink=colors.HexColor('#254f40');muted=colors.HexColor('#637168');light=colors.HexColor('#edf2e9')
 styles={
- 'title':ParagraphStyle('title',fontName='BodyBold',fontSize=24,leading=30,textColor=ink,spaceAfter=15),
- 'sub':ParagraphStyle('sub',fontName='Body',fontSize=10,leading=15,textColor=muted,spaceAfter=15),
- 'h':ParagraphStyle('h',fontName='BodyBold',fontSize=12,leading=17,textColor=ink,spaceBefore=12,spaceAfter=6),
- 'body':ParagraphStyle('body',fontName='Body',fontSize=9,leading=13.3,spaceAfter=8,textColor=colors.HexColor('#26372d')),
+ 'title':ParagraphStyle('title',fontName='BodyBold',fontSize=23,leading=29,textColor=ink,spaceAfter=13),
+ 'sub':ParagraphStyle('sub',fontName='Body',fontSize=9,leading=14,textColor=muted,spaceAfter=12),
+ 'h':ParagraphStyle('h',fontName='BodyBold',fontSize=12,leading=17,textColor=ink,spaceBefore=11,spaceAfter=6),
+ 'body':ParagraphStyle('body',fontName='Body',fontSize=9,leading=13,spaceAfter=8,textColor=colors.HexColor('#26372d')),
  'small':ParagraphStyle('small',fontName='Body',fontSize=8,leading=11,textColor=muted,spaceAfter=7),
- 'cell':ParagraphStyle('cell',fontName='Body',fontSize=8,leading=11),
-}
+ 'cell':ParagraphStyle('cell',fontName='Body',fontSize=8,leading=11)}
 story=[]
 def p(text,style='body'):story.append(Paragraph(text,styles[style]))
-def heading(text):p(text,'h')
-def table(rows,widths):
- t=Table([[Paragraph(escape(str(c)),styles['cell']) for c in row] for row in rows],colWidths=widths,hAlign='LEFT')
- t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),light),('TEXTCOLOR',(0,0),(-1,0),ink),
-  ('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),8),('RIGHTPADDING',(0,0),(-1,-1),8),
-  ('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),8),
-  ('LINEBELOW',(0,0),(-1,0),1,ink),('LINEBELOW',(0,1),(-1,-1),0.3,colors.HexColor('#d9e1d5'))]))
- story.extend([t,Spacer(1,10)])
+def h(text):p(text,'h')
 def page(title,kicker):
  if story:story.append(PageBreak())
  p(kicker.upper(),'sub');p(title,'title')
+def table(rows,widths):
+ t=Table([[Paragraph(escape(str(c)),styles['cell']) for c in row] for row in rows],colWidths=widths,hAlign='LEFT')
+ t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),light),('VALIGN',(0,0),(-1,-1),'TOP'),
+  ('LEFTPADDING',(0,0),(-1,-1),7),('RIGHTPADDING',(0,0),(-1,-1),7),
+  ('TOPPADDING',(0,0),(-1,-1),7),('BOTTOMPADDING',(0,0),(-1,-1),7),
+  ('LINEBELOW',(0,0),(-1,0),1,ink),('LINEBELOW',(0,1),(-1,-1),0.3,colors.HexColor('#d9e1d5'))]))
+ story.extend([t,Spacer(1,8)])
 def pct(v):return f'{v:.1%}' if v is not None else 'Unresolved'
 
-page('ZentroMart VoiceOps','01 / System and stages')
-p('A local multilingual support workspace with grounded policy answers, verified order tools, contextual follow-ups and Gnani speech. Release evidence: 30 October 2026. Policy reference date: 20 October 2026.')
-heading('One controller, three interfaces')
-table([
- ['Input','Shared support pipeline','Output'],
- ['Text console / dashboard','Session state → intent and verification → public retrieval or verified tools → policy calculations → reply','Text, diagnostics, used source chunks'],
- ['Audio folder / dashboard microphone or upload','Local audio normalization → Gnani STT → same controller → Gnani TTS','Sanitized transcript, WAV reply, evidence and timings'],
-],[112,265,122])
-heading('Four required stages')
+page('ZentroMart VoiceOps','01 / Completed local implementation')
+p('Release: 1 November 2026. Policy reference date: 20 October 2026. One support core serves the text console, local dashboard and audio-folder submission command. The current hosted language model is Gemma 4 31B; speech uses Gnani exclusively. The release remains local at the user\'s request.')
+h('Four required stages')
 table([
  ['Stage','Implementation'],
- ['1. Prompt-only','Role/limits prompt and customer message only. No policy facts, tools, reference answers or gold evidence.'],
- ['2. RAG','Gemini Embedding 1 (gemini-embedding-001), 768 dimensions; 154 public KB/catalog chunks. Semantic, lexical and authority ranking; original section IDs and current/historical policy rules.'],
- ['3. Conversation + tools','Explicit session state, follow-ups and topic/order switching. Supplied order lookup and ticket helper; deterministic date and Decimal amount calculations.'],
- ['4. Voice','Gnani prisma-v3.0 STT; timbre-v2.5 / Kaveri TTS. English, Hindi and Hinglish; local ffmpeg normalization and conservative spoken-ID handling.'],
-],[112,387])
-heading('Grounding and identity boundaries')
-p('Private orders are never embedded. An order requires caller-supplied proof, with two attempts scoped to session and order. A changed order needs verification again. Proofs are redacted before prompts and persistence. Tickets are confirmed only after successful creation; idempotency prevents duplicate handovers. No cancellation, payment or refund execution tool is invented.')
-p('The default dashboard uses deterministic local answers. Live RAG is opt-in; speech always uses Gnani. The site remains loopback-only and has not been deployed.','small')
+ ['1. Prompt-only LLM','Role/limits prompt, AI disclosure and customer message. No company documents, tools or answer keys. Actual outputs are retained for comparison.'],
+ ['2. Document-grounded RAG','154 public KB/catalog chunks; Gemini Embedding 1, normalized 768-dimensional vectors; semantic, lexical and authority ranking. Current policies, historical exceptions and original section IDs are preserved.'],
+ ['3. Conversation and tools','Session/order-scoped verification, one-question clarification, contextual follow-ups, topic switches, deterministic calendar/amount calculations, refusals and idempotent human handovers.'],
+ ['4. Gnani voice','prisma-v3.0 STT and timbre-v2.5 / Kaveri TTS. Audio normalization, English/Hindi/Hinglish, conservative identifier handling, playback and audible recovery.'],
+],[111,388])
+h('Shared pipeline')
+table([
+ ['In','Brain','Out'],
+ ['Text or Gnani transcript','Session controller -> public retrieval / verified lookup -> calculations -> reply','Text, decision, diagnostics and original used chunks'],
+ ['Audio folder or browser audio','Local ffmpeg -> Gnani STT -> same controller -> Gnani TTS','Reply WAV, sanitized transcript, evidence, stage timings and explicit failures'],
+],[104,262,133])
+h('Identity, policy and action boundaries')
+p('Private orders, customers and historical call logs are not embedded. Order access requires caller-supplied proof, with two attempts per session/order. A changed order requires verification again. Proofs are redacted before model context and persistence; saved history never restores verified identity. Tickets are confirmed only after the supplied tool succeeds. The agent cannot execute cancellation, refund issuance or pickup booking.')
+p('No practice question/answer map is used. Policy numbers come from KB sections; public catalog durations and deterministic dates may supplement model output automatically. Raw model text is preserved separately from the actual assembled agent reply.','small')
 
-page('Measured answer quality','02 / Frozen practice evaluation')
-p('Same 52 practice questions in original and ASR-like text, same requested Gemini 3.5 Flash-Lite model and generation settings. Provider defaults apply to unspecified temperature/reasoning settings. Each question is an independent session. Reference answers and gold labels stay outside generation; grading occurs only after answers are saved.')
-rows=[['Input / stage','Completed','Contract failures','Decision match','Provisional pass']]
+page('Evaluation and what changed','02 / Historical benchmark and bounded follow-up')
+p('The preserved 30 October comparison used the same Gemini 3.5 Flash-Lite model, generation settings and 52 cases per variant. Reference answers and labels were excluded from generation and used only afterward for grading. These historical scores are not scores for the current Gemma configuration.')
+rows=[['Input / stage','Completed','Rejected outputs','Provisional pass']]
 for variant in ('original','asr'):
  for stage in ('baseline','rag'):
-  r=next(x for x in report['runs'] if x['variant']==variant and x['stage']==stage)
-  s,g=r['summary'],r['grading']
-  rows.append([variant+' / '+stage,f"{s['completed']}/52",s['failed'],pct(s['decision_match_rate']),f"{g['correct']}/52 ({pct(g['accuracy'])})" if g['accuracy'] is not None else f"≥{g['correct']}/52; {g['unresolved']} unresolved"])
-table(rows,[105,70,86,96,142])
-p('A provisional pass requires an accepted decision, required facts, no forbidden claims, correct language and first-turn AI disclosure. Contract failures count as failed answers. Grades use batches of up to ten, judged by the same model family; they have not received human review and are not organizer scores.','small')
-heading('Retrieval, measured independently')
+  r=next(x for x in history['runs'] if x['variant']==variant and x['stage']==stage)
+  rows.append([variant+' / '+stage,f"{r['summary']['completed']}/52",r['summary']['failed'],f"{r['grading']['correct']}/52 ({pct(r['grading']['accuracy'])})"])
+table(rows,[140,92,113,154])
+p('RAG improved by 32.7 percentage points on original text and 42.3 on ASR-like text, while missing the proposed 90% target. Contract failures remain in the denominator. The batched model judge uses required facts, forbidden claims, language, disclosure and accepted decisions; it is provisional, without human review.','small')
+h('Gemma-only follow-up within the approved cap')
+p('A six-question targeted check used Gemma 4 26B for both stages. Baseline: 6 completed, 1 provisional pass. RAG: 1 completed, 4 contract rejections and 1 service failure; 1 provisional pass and 1 unresolved grade, so no overall accuracy is reported. Rejections included invented source paths, duplicate or mismatched claim annotations; these runs remain unchanged.')
+p('The final contract was simplified to validate the actual reply, section IDs, supported/unsupported status, numbers and dates. Gemma 4 31B then completed all 3 live smoke cases (warranty, unsupported delivery and refund date). A subsequent zero-call replay through catalog completion passed their required literal-fact checks. These selected checks are not a new practice-accuracy estimate.','small')
+h('Current retrieval with less unrelated context')
 rows=[['Gemini Embedding 1 / k=12','Original','ASR-like']]
-for label,key in [('Mean candidate recall','mean_recall_at_k'),('Mean enriched-context recall','mean_context_recall'),('Mean candidate precision','mean_precision_at_k'),('Mean context chunks / question','mean_context_chunks')]:
- values=[analysis['retrieval'][v][key] for v in ('original','asr')]
- rows.append([label,*[f'{v:.1f}' if key=='mean_context_chunks' else pct(v) for v in values]])
+for label,key in [('Candidate recall','mean_recall_at_k'),('Enriched-context recall','mean_context_recall'),('Mean context chunks','mean_context_chunks')]:
+ rows.append([label,*[f'{retrieval[v][key]:.1f}' if key=='mean_context_chunks' else pct(retrieval[v][key]) for v in ('original','asr')]])
 table(rows,[285,107,107])
-p('Means use questions with gold evidence where applicable. Context expansion adds neighboring/cross-referenced sections, which increases coverage and prompt size. Retrieval analysis reused cached query vectors and made zero additional provider requests.','small')
-heading('Request budget and pacing')
-rate=report['rate_limit']
-p(f"Approved plan: 208 answer calls + 2 query-embedding batches + 24 judge calls = 234 successful HTTP requests. Actual: {rate['successful_http_requests']} successful, {rate['http_attempts']} attempts, including {rate['rate_limit_responses']} HTTP 429 responses. Shared rolling-window maximum: {rate['peak_quota_weight_in_window']} quota units; safety cap 90 per 60 seconds versus the user's 100 RPM. Embedding items count individually, conservatively. Both workers pause on rate limits and honor retry delays.")
+p('Context fell from 35.3/35.5 to 26.4/26.6 chunks while retaining labelled evidence coverage. Shared safety/escalation rules stay available; unrelated agent guides are no longer added unconditionally. Retrieval rechecks used cached vectors and made no provider calls.','small')
 
-page('Conversation and speech checks','03 / Reliability and local experience')
+page('Voice, conversation and dashboard','03 / Verified behavior and local experience')
 table([
- ['Check','Observed result','Scope'],
- ['Practice replay','96/96 decisions and tool-name/count checks; 23/23 scenarios','Offline controller routing; semantic answer accuracy unscored'],
- ['Regression suite','124 tests passed','Privacy/session isolation, calculations, tools, recovery, history, HTTP and pacing'],
- ['Synthetic speech loopback','3/3 languages passed','English 2.08 s; Hindi 2.40 s; Hinglish 2.40 s; not human microphone recognition'],
- ['Mixed audio batch','3 completed; 2 needs-repeat; 0 failed','Valid synthetic clips plus corrupt and silent inputs'],
- ['Fresh installation','Pinned dependencies, external dataset and one English audio clip passed','No bundled dataset or runtime dependency cache'],
-],[135,174,190])
-heading('Recoverable voice turns')
-p('Clips are limited to 20 MB and 30 seconds. Invalid/silent audio asks for a repeat without claiming support completion. STT and TTS have bounded retries; a failed synthesis retries the saved text instead of repeating identity checks or creating tickets. Streamed WAV headers are repaired from actual PCM length and validated. The batch saves text, audio, original used chunks, sanitized results, hashes and stage timings; partial batches return a nonzero exit code.')
-heading('Dashboard and saved chat history')
-p('A simple responsive solid-color dashboard provides text, record/upload, reply playback, sources and per-turn status. Chat history is stored locally in browser-scoped SQLite; it can be reopened or deleted. Verified identity is not persisted. A restored conversation after server restart requires verification again before private order details.')
-shot=ROOT/'sample_outputs/dashboard.jpg'
+ ['Check','Observed result','Limit'],
+ ['Final regression suite','137 tests passed','Contracts, privacy, dates, tools, history, HTTP, budgets and audible failure recovery'],
+ ['Practice conversations','96/96 decisions and tool-name/count matches; 23/23 scenarios','Routing checks, not semantic answer accuracy'],
+ ['Synthetic language loopback','English, Hindi and Hinglish: 3/3 passed','Synthesized caller audio; not human recognition testing'],
+ ['Mixed audio folder','3 completed; 2 needs-repeat; 0 failed','Silence/corruption request repeats and do not count as support completion'],
+ ['New spoken handover','STT -> controller -> actual ticket -> TTS completed','2 Gnani attempts; this tool turn needs no LLM'],
+ ['Clean execution','Pinned dependencies and external-dataset checks; isolated ZIP validation','Dataset, secrets and runtime history are external'],
+],[125,181,193])
+h('Useful and honest recovery')
+p('The runner validates 20 MB / 30-second clips, normalizes mono 16 kHz PCM and saves text, WAV, used chunks, traces and timings. Silent or ambiguous input asks for a repeat. A model/tool failure now also produces an audible explanation while remaining a failed support turn. Synthesis-only retries reuse text and preserve failure status; they do not repeat verification or ticket actions. Gnani streaming WAV headers are validated and repaired from actual PCM length.')
+h('Local dashboard and saved conversations')
+p('The responsive solid-color workspace offers text, record/upload, playback, source inspection and per-turn diagnostics. Browser-scoped SQLite history can be reopened or deleted; a restored chat after server restart requires verification again. The live status identifies gemma-4-31b-it. No deployment or public push was performed.')
+shot=completion/'dashboard_final.jpg'
 if shot.exists():
- image=Image(str(shot));image.drawWidth=499;image.drawHeight=499*image.imageHeight/image.imageWidth
- if image.drawHeight>155:image.drawHeight=155;image.drawWidth=155*image.imageWidth/image.imageHeight
- image.hAlign='LEFT';story.extend([image,Spacer(1,5)])
-p('Browser checks covered saved history, upload/playback controls, desktop and mobile layout. Human recordings were not supplied; microphone ASR remains untested.','small')
+ im=Image(str(shot));im.drawHeight=135;im.drawWidth=135*im.imageWidth/im.imageHeight;im.hAlign='LEFT';story.extend([im,Spacer(1,5)])
+p('The 27.854-second demo uses actual saved agent replies and synthetic Gnani caller audio: refund policy, contextual wallet follow-up and successful handover. It is labelled artifact playback, uses deterministic policy replies and does not claim to demonstrate Gemma answer accuracy.','small')
 
-page('Failures, limits and reproduction','04 / Release assessment')
-heading('Observed failure modes')
-rag_runs=[r for r in analysis['runs'] if r['stage']=='rag']
-counts={}
-for r in rag_runs:
- for reason,n in r['generation_error_counts'].items():counts[reason]=counts.get(reason,0)+n
-for reason,n in sorted(counts.items(),key=lambda item:-item[1]):
- p(f'<b>{escape(reason)} ({n} cases).</b> Original generated text is retained; rejected answers were not rewritten or regenerated.','small')
-p('Digit-level evidence checks can reject numbers supplied in the question or calculated dates when they are absent from cited chunks. The guard also requires claim text to be an exact reply substring. These checks expose contract failures but do not establish semantic truth. A numeric token appearing in evidence is insufficient proof of a correct policy claim.')
-heading('Prioritized improvements')
-p('1. Distinguish caller-supplied numbers, deterministic calculations and sourced policy quantities in claim provenance; keep privacy checks strict. 2. Reduce excess context and inspect retrieval misses by language and product ambiguity. 3. Review incomplete answers, language mismatches and AI disclosure failures using the saved per-case grades. 4. Add human English/Hindi/Hinglish recordings and independently reviewed semantic holdout/conversation tests before claiming readiness.')
-heading('Limits on the evidence')
-p('Practice cases were used during development, so these are not unseen-test estimates. ASR-like text is a robustness comparison, not a speech-recognition benchmark. No human semantic spot-check or extra holdout grading was performed in the approved request budget. Synthetic demo playback uses deterministic policy replies and actual ticket creation; it does not demonstrate live generated-policy quality. Long offline policy extracts may produce a spoken request to narrow the question.')
-heading('Run and inspect')
+page('Reproduction and release assessment','04 / PS deliverables, budget and limits')
+h('Implemented hardening')
+p('Dates and equivalent numeric forms are normalized before checks; refund settlement dates use the KB calendar rather than model arithmetic. Recognized caller dates may be echoed without licensing invented amounts or durations. Public warranty duration is read from one unambiguous catalog record; contradictory explicit durations are rejected. Reply-level evidence replaces brittle duplicated claim text. Unknown citations and unsupported numeric claims still fail safely; raw outputs and failed grading batches remain available.')
+h('Approved API accounting')
+p(f"Follow-up: {account['llm_attempts']}/20 authorized LLM attempts, {account['successful_llm_http_requests']} HTTP successes, {account['rate_limit_responses']} rate-limit responses and {account['connection_failures']} connection failure. All used Gemma 4. Peak: {account['peak_llm_requests_per_60_seconds']} requests per rolling minute, below 100 RPM; the final 31B calls were paced at one per minute. Gnani: {account['gnani_attempts']}/4 attempts. Embedding API calls: zero. No further model requests were made after the cap.")
+p('The earlier 234-success benchmark used 248 attempts, including 14 HTTP 429 responses, with a weighted peak of 70 per minute. Its request budget and results are separate from the new capped check. Gemma input/output is currently listed as free by Google; speech and future uncached embeddings have separate account terms.','small')
+h('Exact run commands')
 table([
- ['Interface','Command / artifact'],
- ['Dashboard','python -m src web (local) or LLM_CALLS_ENABLED=true python -m src web --live'],
- ['Audio folder','LLM_CALLS_ENABLED=true python run.py --input-dir ./test_audio --output-dir ./outputs/run1 --dataset-dir ./Dataset'],
- ['Evaluation','scripts/final_evaluation.py --asr --judge; explicit billable rerun, not required to inspect saved results'],
- ['Saved evidence','sample_outputs/evaluation/: raw answers, manifests, grades and request audit; sample_outputs/voice_batch/: text, WAV and used chunks'],
-],[110,389])
-p('Install requirements.txt in Python 3.12+, install ffmpeg and configure keys in local .env. Dataset is external. report.pdf has four pages; demo.mp4 is 27.854 seconds. The release ZIP excludes .env, keys, Dataset, virtual environments and private runtime/history files. Source is prepared locally; public repository synchronization and later website deployment are separate release actions.','small')
+ ['Use','Command'],
+ ['Live local dashboard','LLM_CALLS_ENABLED=true python -m src web --live'],
+ ['Required audio-folder interface','LLM_CALLS_ENABLED=true python run.py --input-dir ./test_audio --output-dir ./outputs/run1 --dataset-dir ./Dataset'],
+ ['No-API verification','python -m unittest discover -s tests -q; python scripts/verify_submission.py'],
+],[126,373])
+p('Use Python 3.12+, requirements.txt and ffmpeg. Configure local .env keys; keep the supplied Dataset external. Report generation additionally uses reportlab and verification uses pdfinfo/ffprobe. sample_outputs/ includes frozen comparisons, current smoke/replay evidence, actual voice artifacts and diagnostics. The ZIP uses an explicit allowlist, hashes and a credential scan.','small')
+h('Scope and release limits')
+p('Digit/source checks do not prove semantic correctness. The final Gemma model has not received a full 52-question benchmark or human semantic review; selected smoke and literal checks cannot replace them. No organizer/unseen-test score is claimed. The brief permits synthetic data and optional own-voice tests; the user supplied no recordings. The original problem statement is unchanged. A public repository is requested by the PS, but the user explicitly chose a local release, so publishing is deferred. The local code, four-page report, short demo and ZIP are prepared.')
+p('References: Google hosted Gemma guide (ai.google.dev/gemma/docs/core/gemma_on_gemini_api), official API pricing (ai.google.dev/gemini-api/docs/pricing), supplied PS and Dataset contracts. Full source-to-requirement mapping: PS_COMPLETION.md.','small')
 
 def footer(c,doc):
- c.setStrokeColor(colors.HexColor('#d9e1d5'));c.line(48,44,547,44)
- c.setFont('Body',8);c.setFillColor(muted);c.drawString(48,30,'ZentroMart VoiceOps  /  30 October 2026');c.drawRightString(547,30,f'{doc.page} / 4')
-doc=SimpleDocTemplate(str(ROOT/'report.pdf'),pagesize=(595,842),leftMargin=48,rightMargin=48,topMargin=42,bottomMargin=57,
- title='ZentroMart VoiceOps — Implementation and evaluation',author='ZentroMart VoiceOps')
-doc.build(story,onFirstPage=footer,onLaterPages=footer)
+ c.setStrokeColor(colors.HexColor('#d9e1d5'));c.line(48,44,547,44);c.setFont('Body',8);c.setFillColor(muted)
+ c.drawString(48,30,'ZentroMart VoiceOps  /  1 November 2026');c.drawRightString(547,30,f'{doc.page} / 4')
+SimpleDocTemplate(str(ROOT/'report.pdf'),pagesize=(595,842),leftMargin=48,rightMargin=48,topMargin=42,bottomMargin=57,
+ title='ZentroMart VoiceOps - PS implementation and evaluation',author='ZentroMart VoiceOps').build(story,onFirstPage=footer,onLaterPages=footer)
 print(ROOT/'report.pdf')

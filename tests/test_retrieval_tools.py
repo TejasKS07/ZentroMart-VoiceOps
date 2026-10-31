@@ -16,7 +16,7 @@ from src.agent import AgentOutputError
 from src.config import ConfigurationError, PROJECT_ROOT, Settings
 from src.dataset import PublicKnowledge
 from src.llm import ChatCompletionClient
-from src.rag import RagAgent
+from src.rag import RagAgent, numeric_tokens, RAG_RESPONSE_SCHEMA
 from src.retrieval.index import KnowledgeIndex, chunks, source_fingerprint
 from src.rules.calculations import PolicyCalculator
 from src.rules.policies import PolicyRules
@@ -96,7 +96,7 @@ class GroundingTests(unittest.TestCase):
     def response(self, text="UPI takes 1 to 3 business days.", ids=None):
         ids = ["REF-2"] if ids is None else ids
         return {"decision": "answer", "reply": text, "language": "en", "supported": True,
-                "evidence_ids": ids, "claims": [{"text": text, "evidence_ids": ids}]}
+                "evidence_ids": ids}
 
     def test_real_source_text_and_ids_reach_prompt_but_labels_do_not(self):
         client = Mock()
@@ -117,9 +117,76 @@ class GroundingTests(unittest.TestCase):
     def test_unsupported_question_can_abstain_without_fabricated_evidence(self):
         client = Mock()
         client.complete.return_value = GenerationTrace(json.dumps({"decision": "answer", "reply": "I do not have information on that.",
-            "language": "en", "supported": False, "evidence_ids": [], "claims": []}), "test-double")
+            "language": "en", "supported": False, "evidence_ids": []}), "test-double")
         result = RagAgent(client, self.index).respond(CustomerInput("midnight delivery?", "one"))
         self.assertEqual(result.evidence, ())
+
+    def test_equivalent_numeric_spellings_keep_evidence_checks_strict(self):
+        self.assertEqual(numeric_tokens('01 October; ₹2.00; ०३'), {'1','2','3'})
+        source=Evidence('P-1','kb/test','Orders placed 01 October to 15 October 2026 have a 30 day return window.',
+            {'doc_type':'policy','status':'current','effective_from':'2026-01-01'})
+        index=KnowledgeIndex((source,),np.array([[1.,0.]]),FakeEmbedder(),'test')
+        client=Mock();client.complete.return_value=GenerationTrace(json.dumps(self.response(
+            'Orders placed 1 October to 15 October 2026 have a 30 day return window.',ids=['P-1'])),'test')
+        self.assertEqual(RagAgent(client,index).respond(CustomerInput('return window?','s')).decision.value,'answer')
+        schema=client.complete.call_args.kwargs['response_schema']
+        self.assertEqual(schema['properties']['evidence_ids']['items']['enum'],['P-1'])
+        self.assertEqual(schema['properties']['language']['enum'],['en'])
+        self.assertNotIn('claims',schema['properties'])
+
+    def test_caller_date_echo_does_not_authorize_an_invented_policy_duration(self):
+        for text,valid in [('Ordered on 17 October 2026; UPI takes 1 to 3 business days.',True),
+                           ('Ordered on 17 October 2026; UPI takes 17 days.',False)]:
+            client=Mock();client.complete.return_value=GenerationTrace(json.dumps(self.response(text)),'test')
+            call=lambda:RagAgent(client,self.index).respond(CustomerInput('Ordered on 17 October 2026. UPI timeline?','s'))
+            if valid:self.assertEqual(call().reply,text)
+            else:
+                with self.assertRaises(AgentOutputError):call()
+
+    def test_warranty_completion_uses_unseen_public_catalog_values_and_preserves_raw_model_text(self):
+        for months in (18,24):
+            source=Evidence('products.csv:ELE-0999','data/products.csv',f'sku: ELE-0999\ntitle: Sample Phone\nwarranty_months: {months}',
+                {'doc_type':'catalog','status':'current','effective_from':'2026-01-01','sku':'ELE-0999','title':'Sample Phone'})
+            index=KnowledgeIndex((source,),np.array([[1.,0.]]),FakeEmbedder(),'test')
+            raw=json.dumps(self.response('The product has warranty coverage.',ids=[source.evidence_id]))
+            client=Mock();client.complete.return_value=GenerationTrace(raw,'test')
+            result=RagAgent(client,index).respond(CustomerInput('Warranty on ELE-0999?','s'))
+            self.assertIn(f'{months}-month warranty',result.reply)
+            self.assertEqual(result.generation.raw_output,raw)
+            self.assertEqual(result.evidence[0].evidence_id,source.evidence_id)
+
+    def test_same_number_with_wrong_warranty_unit_is_rejected(self):
+        from src.rules.public_facts import complete_catalog_warranty
+        source=Evidence('products.csv:TEST-0999','data/products.csv','warranty_months: 18',{'doc_type':'catalog'})
+        with self.assertRaisesRegex(ValueError,'contradicts catalog'):
+            complete_catalog_warranty('Warranty lasts 18 years.','warranty',[source],'en')
+
+    def test_public_refund_dates_use_actual_policy_calendar_without_order_access(self):
+        knowledge=PublicKnowledge.load(ROOT)
+        index=KnowledgeIndex.build(ROOT,FakeEmbedder())
+        client=Mock();reply='The latest settlement date is 27 October 2026, conditional on initiation on 17 October 2026.'
+        client.complete.return_value=GenerationTrace(json.dumps(self.response(reply)), 'test')
+        response=RagAgent(client,index,knowledge=knowledge).respond(CustomerInput(
+            'My card refund was started on 17 October 2026. By which date?', 's'))
+        payload=json.loads(client.complete.call_args.args[0][1]['content'])
+        self.assertEqual(payload['calculations'][0]['values']['latest_date'],'2026-10-27')
+        self.assertIsNone(payload['verified_order_facts'])
+        self.assertEqual(response.tool_events,())
+
+    def test_dates_with_individually_supported_digits_cannot_override_calculation(self):
+        knowledge=PublicKnowledge.load(ROOT);index=KnowledgeIndex.build(ROOT,FakeEmbedder())
+        client=Mock();client.complete.return_value=GenerationTrace(json.dumps(self.response(
+            'The latest settlement date is 7 October 2026.')), 'test')
+        with self.assertRaises(AgentOutputError):
+            RagAgent(client,index,knowledge=knowledge).respond(CustomerInput(
+                'My card refund was started on 17 October 2026.', 's'))
+
+    def test_ambiguous_refund_dates_are_not_silently_assigned(self):
+        from src.rules.public_facts import refund_calculations
+        calculator=PolicyCalculator(PolicyRules.from_knowledge(PublicKnowledge.load(ROOT)))
+        self.assertEqual(refund_calculations('My card refund started on 14 October; delivery was 10 October.',calculator),())
+        self.assertEqual(refund_calculations('My card refund will be started on 25 October 2026.',calculator),())
+        self.assertEqual(refund_calculations('Card or UPI refund started on 14 October.',calculator),())
 
     @patch("requests.post")
     def test_deferred_generation_never_touches_the_network(self, post):

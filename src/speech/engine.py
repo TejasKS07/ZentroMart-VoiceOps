@@ -25,6 +25,7 @@ class VoiceTurn:
         return {"status": self.status, "transcript": self.transcript, "spoken_text": self.spoken_text,
                 "response": self.response.to_dict() if self.response else None, "error": self.error,
                 "timings_ms": self.timings_ms, "audio_seconds": self.audio_seconds,
+                "understood": self.understood,
                 "voice_complete": self.status == "completed" and bool(self.audio) and self.understood}
 
 
@@ -77,7 +78,16 @@ class VoiceEngine:
             result = VoiceTurn("needs_repeat", response, transcript,
                 error={"stage": exc.stage, "code": exc.code, "message": str(exc)}, timings_ms=timings, audio_seconds=duration, understood=False)
         except Exception:
-            return VoiceTurn("failed", None, "", error={"stage": "agent", "code": "agent_failed", "message": "The support turn could not be completed."}, timings_ms=timings, audio_seconds=duration)
+            hi=language=='hi-IN'
+            reply=('अभी प्रमाणित जवाब नहीं मिल पाया। कृपया फिर कोशिश करें या मानव सहयोगी से बात करने के लिए कहें।' if hi else
+                'I could not produce a grounded answer just now. Please try again or ask for a human colleague.')
+            if not self.agent.snapshot(session).introduced:
+                reply=('मैं ZentroMart का AI सपोर्ट असिस्टेंट हूँ। ' if hi else "I'm ZentroMart's AI support assistant. ")+reply
+                self.agent.mark_introduced(session)
+            response=AgentResponse(Decision.CLARIFY,reply,language='hi' if hi else 'en',
+                diagnostics={'code':'agent_failed','status':'failed','llm_used':False,'tools':[]})
+            result=VoiceTurn('failed',response,'',error={'stage':'agent','code':'agent_failed','message':'The support turn could not be completed.'},
+                timings_ms=timings,audio_seconds=duration,understood=False)
         else:
             result = VoiceTurn("text_ready", response, transcript, timings_ms=timings, audio_seconds=duration)
         result.spoken_text = spoken_reply(response.reply, response.language)
@@ -103,7 +113,10 @@ class VoiceEngine:
             result.status = "failed"
             result.error = {"stage": "tts", "code": "tts_failed", "message": "Speech synthesis failed. The text reply is available."}
         else:
-            if not result.error or result.error.get("stage") == "tts":
+            if result.response.diagnostics.get('code')=='agent_failed':
+                result.status='failed'
+                result.error={'stage':'agent','code':'agent_failed','message':'The support turn could not be completed.'}
+            elif not result.error or result.error.get("stage") == "tts":
                 result.status, result.error = ("completed" if result.understood else "needs_repeat"), None
             # An audible clarification for unclear input is not a completed
             # understanding of the original clip; retain needs_repeat.
@@ -123,4 +136,4 @@ def restored_turn(data):
         claims=tuple(GroundedClaim(c['text'],tuple(c['evidence_ids'])) for c in row.get('claims',[])),
         supported=row.get('supported'),diagnostics=row.get('diagnostics',{}))
     return VoiceTurn('text_ready',response,data.get('transcript',''),data.get('spoken_text',row['reply']),
-        timings_ms=data.get('timings_ms',{}),audio_seconds=data.get('audio_seconds'),understood=data.get('status')!='needs_repeat')
+        timings_ms=data.get('timings_ms',{}),audio_seconds=data.get('audio_seconds'),understood=data.get('understood',data.get('status')!='needs_repeat'))

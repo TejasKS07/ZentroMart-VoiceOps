@@ -126,7 +126,7 @@ class FeedbackTests(unittest.TestCase):
 
     def test_console_debug_status_reset_and_empty_input(self):
         output = self.console("", "wjhat", "new order", "1234", "/status", "/reset", "/status", "/bad", "/quit", debug=True)
-        self.assertIn("Gemini is disabled", output)
+        self.assertIn("AI generation is disabled", output)
         self.assertIn("Please type a support question", output)
         self.assertIn('"code": "invalid_order_id"', output)
         self.assertIn('"tools": []', output)

@@ -46,3 +46,35 @@ Among accepted RAG outputs, the provisional judge found 15 original fact failure
 The user has no recordings, so own-recorded English/Hindi/Hinglish testing is unavailable. Human semantic spot-checks, extra holdout grading, public-repository synchronization and website deployment have not been performed. Deployment remains a later step as requested. Keep these limitations with the measured results.
 
 Release decision: the user explicitly chose to keep the release local. Source is committed on the local `codex/voiceops-completion` branch; nothing was pushed.
+
+
+## Completion update - 1 November 2026
+
+This section supersedes the model/configuration and test-count status above;
+the earlier full comparison remains historical evidence. The final language
+model is Gemma 4 31B, with minimal thinking, temperature 0.2 and a 90-second
+example timeout. The model is called through the documented native text API.
+The final source passes 137 tests and all 96 conversation routing checks.
+
+Reply-level evidence, source/language-constrained JSON, equivalent-number
+normalization, conditional refund calendar calculations and source-derived
+catalog warranty completion address the earlier brittle annotation failures.
+Raw generation remains preserved, while the actual assembled agent reply records
+any catalog supplementation. Unsupported citations, invented digits and
+contradictory dates/durations remain rejected. Local coupon, delivery-attempt,
+RTO, Wallet and refund-initiation values are parsed from documents. Provider
+failures now also receive audible recovery while retaining failed support status.
+
+The separate authorized check used exactly 20 Gemma 4 API attempts, two Gnani
+attempts and zero embedding calls, peaking at 10 requests in a rolling minute.
+The initial 26B six-case RAG check completed one answer, rejected four contracts
+and had one service failure; its provisional grade remains unresolved. Final
+31B smoke: three completed contracts. A separate zero-call replay through catalog
+completion passed their required literal facts. No new full accuracy estimate is
+claimed. New evidence is in sample_outputs/completion/; old results are unchanged.
+
+The PS permits, rather than requires, own-voice testing. Human microphone ASR
+is untested and human semantic review was not performed. PS_COMPLETION.md maps
+each requirement and records the user-controlled public repository exception.
+The local dashboard shows the configured model and restored history. The refreshed
+four-page report and release ZIP retain all limitations. No publishing occurred.

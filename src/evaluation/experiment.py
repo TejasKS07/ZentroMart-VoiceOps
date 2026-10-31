@@ -74,7 +74,8 @@ def baseline(settings: Settings, *, dataset_dir: Path, variant: str = "original"
     agent = BaselineAgent(client)
     if stage == "rag":
         from ..rag import RAG_PROMPT, RAG_PROMPT_SHA256, RAG_PROMPT_VERSION, RagAgent
-        agent = RagAgent(client, index)
+        from ..dataset import PublicKnowledge
+        agent = RagAgent(client, index, knowledge=PublicKnowledge.load(dataset_dir))
         if hasattr(index.embedder,'prefetch_queries'):
             index.embedder.prefetch_queries([case.customer.text for case in cases])
         metadata.update(stage="step2_rag", system_prompt=RAG_PROMPT, prompt_sha256=RAG_PROMPT_SHA256,

@@ -62,7 +62,7 @@ def main():
                 if row['status']!='failed' or 'generation' not in row:continue
                 trace=GenerationTrace(**row['generation'])
                 class SavedClient:
-                    def complete(self,messages):return trace
+                    def complete(self,messages,**kwargs):return trace
                 captured=[]
                 def observe(frame,event,arg):
                     if event=='exception' and frame.f_code.co_filename.endswith('/src/rag.py'):

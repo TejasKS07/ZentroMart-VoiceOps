@@ -206,7 +206,7 @@ class KnowledgeIndex:
         # Include the source-of-truth rules and explicit cross-references, retaining
         # original chunks instead of replacing facts with hand-authored summaries.
         for evidence in self.evidence:
-            if evidence.metadata.get("doc_type") in {"meta", "agent_guide"}:
+            if evidence.metadata.get("doc_type") == "meta" or evidence.evidence_id.startswith('ESC-'):
                 selected[evidence.evidence_id] = evidence
         # Adjacent policy sections carry scope, exceptions and fee/timeline details
         # that short isolated sections omit. Include neighbors from the same doc.

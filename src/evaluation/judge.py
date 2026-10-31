@@ -119,6 +119,7 @@ def grade_run_batched(run_dir, cases, client, *, batch_size=10, secrets=(), prog
             completed=[r for r in group if r['status']=='completed']
             results={}
             if completed:
+                trace=None;batch_error=None
                 payload=[]
                 for row in completed:
                     case=by_id[row['case_id']]
@@ -136,9 +137,14 @@ def grade_run_batched(run_dir, cases, client, *, batch_size=10, secrets=(), prog
                     for item in data:
                         if set(item)!={*CHECKS,'rationale','case_id'} or any(type(item[k]) is not bool for k in CHECKS) or not isinstance(item['rationale'],str):raise ValueError('Invalid batch judge checks')
                     results={item['case_id']:item for item in data}
-                    batches.write(json.dumps({'case_ids':[r['case_id'] for r in completed],'generation':trace.to_dict(secrets)},ensure_ascii=False)+'\n');batches.flush()
-                except Exception:
+                except Exception as exc:
                     results={}
+                    batch_error=type(exc).__name__
+                finally:
+                    batch={'case_ids':[r['case_id'] for r in completed],'status':'graded' if results else 'unresolved'}
+                    if trace is not None:batch['generation']=trace.to_dict(secrets)
+                    if batch_error:batch['error_type']=batch_error
+                    batches.write(json.dumps(batch,ensure_ascii=False)+'\n');batches.flush()
             for row in group:
                 item=results.get(row['case_id'])
                 score={'case_id':row['case_id'],'decision_correct':row.get('decision_correct',False)}

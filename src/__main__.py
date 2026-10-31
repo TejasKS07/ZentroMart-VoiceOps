@@ -98,7 +98,8 @@ def main(argv: list[str] | None = None) -> int:
             rag = None
             if args.live:
                 from .rag import RagAgent
-                rag = RagAgent(ChatCompletionClient(settings), local_index())
+                from .dataset import PublicKnowledge
+                rag = RagAgent(ChatCompletionClient(settings), local_index(), knowledge=PublicKnowledge.load(dataset_dir))
             agent = ConversationAgent(SupportOperations(dataset_dir, settings.runtime_dir / "tools"), rag=rag)
             if args.command == "web":
                 from .web import serve
@@ -160,7 +161,8 @@ def main(argv: list[str] | None = None) -> int:
             agent = BaselineAgent(client)
             if args.stage == "rag":
                 from .rag import RagAgent
-                agent = RagAgent(client, local_index())
+                from .dataset import PublicKnowledge
+                agent = RagAgent(client, local_index(), knowledge=PublicKnowledge.load(dataset_dir))
             response = agent.respond(CustomerInput(args.message, uuid4().hex))
             result = response.to_dict((settings.llm_api_key, settings.gnani_api_key))
         elif args.command == "baseline":

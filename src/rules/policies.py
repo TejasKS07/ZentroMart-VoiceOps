@@ -45,6 +45,20 @@ class PolicyRules:
     holidays: frozenset[date]
     sections: dict[str, str]
 
+    @property
+    def coupons_per_order(self):
+        return number(r'Only (\d+) coupon',self.sections['CPN-1'])
+
+    @property
+    def delivery_attempts(self):
+        return number(r'up to (\d+) delivery attempts',self.sections['DEL-3'])
+
+    @property
+    def rto_days(self):
+        text=self.sections['REF-1']
+        return (number(r'usually (\d+) to (\d+) calendar days',text,1),
+                number(r'usually (\d+) to (\d+) calendar days',text,2))
+
     @classmethod
     def from_knowledge(cls, knowledge: PublicKnowledge) -> "PolicyRules":
         sections = {e.evidence_id: e.text for d in knowledge.documents if d.metadata["status"] == "current" for e in d.sections}
