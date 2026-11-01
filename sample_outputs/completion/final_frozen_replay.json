@@ -1,0 +1,315 @@
+{
+  "kind": "frozen-output replay through final deterministic catalog/calendar validation",
+  "new_generation_calls": 0,
+  "embedding_calls": 0,
+  "not_an_accuracy_estimate": true,
+  "results": [
+    {
+      "case_id": "PQ0002",
+      "response": {
+        "schema_version": "1.0",
+        "decision": "answer",
+        "reply": "Hello! Main ZentroMart ka AI assistant hoon. Haan, SKU ELE-0012 par ZentroMart Assured warranty hai. Aap app mein 'My Orders' section ke under claim raise kar sakte hain. Catalog ke mutabik warranty 12 mahine ki hai.",
+        "language": "hi-en",
+        "evidence_ids": [
+          "products.csv:ELE-0012",
+          "WAR-2"
+        ],
+        "evidence": [
+          {
+            "evidence_id": "products.csv:ELE-0012",
+            "source": "data/products.csv",
+            "text": "sku: ELE-0012\ntitle: Kestrel K7 Smartphone 128 GB, Beige\nbrand: Kestrel\nreturn_category: electronics\nprice_inr: 17549\nfulfilled_by: ZentroMart\nassured: True\nwarranty_months: 12\ndescription: Kestrel K7 Smartphone 128 GB, Beige. Sold on ZentroMart.",
+            "metadata": {
+              "doc_type": "catalog",
+              "status": "current",
+              "effective_from": "2026-10-20",
+              "sku": "ELE-0012",
+              "title": "Kestrel K7 Smartphone 128 GB, Beige",
+              "return_category": "electronics"
+            }
+          },
+          {
+            "evidence_id": "WAR-2",
+            "source": "kb/pol_warranty_assured.md",
+            "text": "## [WAR-2] ZentroMart Assured\nProducts marked `assured = true` in the catalog carry a 12-month ZentroMart Assured warranty from the delivery date, in addition to any brand warranty. Claims are raised in the app under My Orders, and ZentroMart arranges pickup and repair or replacement.",
+            "metadata": {
+              "doc_id": "POL-WAR",
+              "title": "Warranty and ZentroMart Assured",
+              "doc_type": "policy",
+              "audience": "customer",
+              "language": "en",
+              "version": "1.1",
+              "effective_from": "2026-02-01",
+              "status": "current"
+            }
+          }
+        ],
+        "retrieved_evidence_ids": [
+          "KB-00.1",
+          "KB-00.2",
+          "KB-00.3",
+          "KB-00.4",
+          "DEL-4",
+          "DEL-5",
+          "DEL-6",
+          "DWM-3",
+          "DWM-4",
+          "DWM-5",
+          "MKS-2",
+          "MKS-3",
+          "PLS-1",
+          "PLS-2",
+          "PLS-3",
+          "REF-1",
+          "REF-2",
+          "REF-3",
+          "REF-4",
+          "RET-1",
+          "RET-2",
+          "WAR-1",
+          "WAR-2",
+          "WAR-3",
+          "products.csv:ELE-0012",
+          "ESC-1",
+          "ESC-2",
+          "ESC-3",
+          "ESC-4"
+        ],
+        "tool_events": [],
+        "timings_ms": {
+          "retrieval": 11.658723999971699,
+          "llm": 23046.586079999997
+        },
+        "generation": {
+          "raw_output": "{\"decision\": \"answer\", \"reply\": \"Hello! Main ZentroMart ka AI assistant hoon. Haan, SKU ELE-0012 par ZentroMart Assured warranty hai. Aap app mein 'My Orders' section ke under claim raise kar sakte hain.\", \"language\": \"hi-en\", \"supported\": true, \"evidence_ids\": [\"products.csv:ELE-0012\", \"WAR-2\"]}",
+          "model": "gemma-4-31b-it",
+          "response_id": "mkPmatLEJtuN694PqMiDoQ8",
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 5978,
+            "completion_tokens": 90,
+            "total_tokens": 6068
+          },
+          "latency_ms": 23046.586079999997,
+          "attempts": 1
+        },
+        "supported": true,
+        "diagnostics": {
+          "postprocessing": [
+            "catalog_warranty_duration"
+          ]
+        },
+        "claims": [
+          {
+            "text": "Hello! Main ZentroMart ka AI assistant hoon. Haan, SKU ELE-0012 par ZentroMart Assured warranty hai. Aap app mein 'My Orders' section ke under claim raise kar sakte hain. Catalog ke mutabik warranty 12 mahine ki hai.",
+            "evidence_ids": [
+              "products.csv:ELE-0012",
+              "WAR-2"
+            ]
+          }
+        ]
+      },
+      "required_literal_fact_checks": [
+        true,
+        true
+      ]
+    },
+    {
+      "case_id": "PQ0004",
+      "response": {
+        "schema_version": "1.0",
+        "decision": "answer",
+        "reply": "Hello! I am ZentroMart's AI assistant. I'm afraid I don't have information regarding specific delivery time slots like midnight delivery. Please check the promised delivery date shown at checkout for your order.",
+        "language": "en",
+        "evidence_ids": [],
+        "evidence": [],
+        "retrieved_evidence_ids": [
+          "KB-00.1",
+          "KB-00.2",
+          "KB-00.3",
+          "KB-00.4",
+          "CAN-1",
+          "CAN-2",
+          "CAN-3",
+          "CAN-4",
+          "DEL-1",
+          "DEL-2",
+          "DEL-3",
+          "DEL-4",
+          "DEL-5",
+          "DEL-6",
+          "DWM-1",
+          "DWM-2",
+          "PAY-1",
+          "PAY-2",
+          "PAY-3",
+          "REF-1",
+          "REF-4",
+          "ESC-1",
+          "ESC-2",
+          "ESC-3",
+          "ESC-4",
+          "FAQ-3"
+        ],
+        "tool_events": [],
+        "timings_ms": {
+          "retrieval": 6.021190999945247,
+          "llm": 55117.14366399997
+        },
+        "generation": {
+          "raw_output": "{\n  \"decision\": \"answer\",\n  \"reply\": \"Hello! I am ZentroMart's AI assistant. I'm afraid I don't have information regarding specific delivery time slots like midnight delivery. Please check the promised delivery date shown at checkout for your order.\",\n  \"language\": \"en\",\n  \"supported\": false,\n  \"evidence_ids\": []\n}",
+          "model": "gemma-4-31b-it",
+          "response_id": "1kPmav_hHYyy694Pl7D3yA8",
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 5205,
+            "completion_tokens": 84,
+            "total_tokens": 5289
+          },
+          "latency_ms": 55117.14366399997,
+          "attempts": 1
+        },
+        "supported": false,
+        "diagnostics": {},
+        "claims": []
+      },
+      "required_literal_fact_checks": [
+        true
+      ]
+    },
+    {
+      "case_id": "PQ0022",
+      "response": {
+        "schema_version": "1.0",
+        "decision": "answer",
+        "reply": "Hello! I am ZentroMart's AI assistant. For credit card refunds, the amount typically reaches you within 5 to 7 business days. Based on your initiation date of 17 October 2026, you should receive it by 27 October 2026.",
+        "language": "en",
+        "evidence_ids": [
+          "REF-2"
+        ],
+        "evidence": [
+          {
+            "evidence_id": "REF-2",
+            "source": "kb/pol_refunds.md",
+            "text": "## [REF-2] How long refunds take after initiation\nRefunds go back to the original payment method. Timelines are counted in business days from the day the refund is initiated.\n\n| Payment method | Time to reach you |\n| --- | --- |\n| UPI | 1 to 3 business days |\n| Credit or debit card | 5 to 7 business days |\n| Net banking | 3 to 5 business days |\n| ZentroMart Wallet | Instant, within 2 hours |\n| Bank transfer (NEFT) for cash-on-delivery orders | 5 to 7 business days |\n| ZentroMart Wallet for cash-on-delivery orders | Instant, within 2 hours |",
+            "metadata": {
+              "doc_id": "POL-REF",
+              "title": "Refunds policy",
+              "doc_type": "policy",
+              "audience": "customer",
+              "language": "en",
+              "version": "2.1",
+              "effective_from": "2026-06-15",
+              "status": "current"
+            }
+          }
+        ],
+        "retrieved_evidence_ids": [
+          "KB-00.1",
+          "KB-00.2",
+          "KB-00.3",
+          "KB-00.4",
+          "PAY-2",
+          "PAY-3",
+          "PAY-4",
+          "REF-1",
+          "REF-2",
+          "REF-3",
+          "REF-4",
+          "REF-5",
+          "REF-6",
+          "RET-2",
+          "RET-6",
+          "RET-7",
+          "RET-8",
+          "RET-9",
+          "ESC-1",
+          "ESC-2",
+          "ESC-3",
+          "ESC-4",
+          "FAQ-1"
+        ],
+        "tool_events": [],
+        "timings_ms": {
+          "retrieval": 5.310033999876396,
+          "llm": 80045.07889299998
+        },
+        "generation": {
+          "raw_output": " {\n  \"decision\": \"answer\",\n  \"reply\": \"Hello! I am ZentroMart's AI assistant. For credit card refunds, the amount typically reaches you within 5 to 7 business days. Based on your initiation date of 17 October 2026, you should receive it by 27 October 2026.\",\n  \"language\": \"en\",\n  \"supported\": true,\n  \"evidence_ids\": [\n    \"REF-2\"\n  ]\n}",
+          "model": "gemma-4-31b-it",
+          "response_id": "EkTmasbSKNGC694Ph5zNyA8",
+          "finish_reason": "stop",
+          "usage": {
+            "prompt_tokens": 5188,
+            "completion_tokens": 112,
+            "total_tokens": 5300
+          },
+          "latency_ms": 80045.07889299998,
+          "attempts": 1
+        },
+        "supported": true,
+        "diagnostics": {},
+        "claims": [
+          {
+            "text": "Hello! I am ZentroMart's AI assistant. For credit card refunds, the amount typically reaches you within 5 to 7 business days. Based on your initiation date of 17 October 2026, you should receive it by 27 October 2026.",
+            "evidence_ids": [
+              "REF-2"
+            ]
+          }
+        ]
+      },
+      "required_literal_fact_checks": [
+        true
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/__init__.py": "c3f1d1894281be11173c9990aa8ba78a8841461b7aa319bcecbad3ed1a094e83",
+    "src/__main__.py": "adabaf7f3c709bbb0c913a47cedf28877f837d4ed9bbaa7d14ec6d55ad578541",
+    "src/agent.py": "7572d5239073410d1a4ca2effeb114f227f2b25da65247cba83c09be413c1e1d",
+    "src/batch.py": "a1de7bac327e7dbc061b404119946e7753fa9c36fa5a21b55e2fdb7f27b38e6d",
+    "src/chat.py": "55b01b356bf03c4beb0e5f5a7ffb549c3e483221f4f605e7024efb520697158e",
+    "src/config.py": "e978dd9af53d707f95c5f0afa2273bcac4ac9d85881fcd4b58e010c840ae11d8",
+    "src/conversation.py": "276921a908528fdcef047fb582c0607466e686d88e8bd06c7c9458046ccce20b",
+    "src/dataset.py": "b9e806534fdf06830a85deabbc60ed79bf5d185f4ca9c4741380c207e53a6f06",
+    "src/evaluation/__init__.py": "e49a162968e807d88982fd6707c2b31c3c6aa2e6f05e659885ffaad9a284a065",
+    "src/evaluation/cases.py": "61651059b103f4ae60417b85bb6fea5b5916f3526ab6a13f555289ea59453686",
+    "src/evaluation/conversation_judge.py": "7976951f1e2fd3816b23c0a2e649d60a76d472dff4f4cd68c8a98bb9a9637743",
+    "src/evaluation/conversations.py": "a2c61a2f9d1e4e1112d3292f9eb66795374089aec75920db066345d8c1c40f23",
+    "src/evaluation/experiment.py": "e15a1c942536da164d18763d1f383b1301940dda6552ffa7c51bb978a1acde90",
+    "src/evaluation/holdout.py": "1299c4667f3a77cfe5520b78e6c3325793c00390e058294e65c148b061e80867",
+    "src/evaluation/judge.py": "12774557c1fe22973cc07d9d9783c35cb437f69bdc14825e0c4fae840bd5db3a",
+    "src/evaluation/retrieval.py": "88cdf64d779ef148f1c617daeb537a6ee6e0d3e753eb6ecf896f5da5fadf0b65",
+    "src/evaluation/runner.py": "d63e303110e8370f30bb85bb0ba98763d0c150d23e3dcb44f6c8f627dcf1c4e0",
+    "src/factory.py": "fe1c477bdc0f9cced520d4e71c97432deaccb47e349a49314c08ae1565643234",
+    "src/history.py": "a4f981cf07abb329a82167b5d7edaae46072692d3673b70d36fbe0b7f7908597",
+    "src/integrations.py": "f8d22a4aa328a5e0c315b569d6b7bc433b542224d0ead65eeb175b1a827dde8c",
+    "src/language.py": "ab87ed339a285cecdf2cf669fc785899ebcb8f11e19d1136b44715cd95f0ebdb",
+    "src/llm.py": "a903df83b19d64863bdf51d99c08528e8a741074b9908a9df6594c9a4066f885",
+    "src/prompts/baseline.txt": "db9238e9c23197849eec5f4ee138a02216913a31e5160be733d910963c32d9a6",
+    "src/prompts/rag.txt": "2766e0896eb6f104f284b31c22d44b939117c8ccc41782afe997eec775b8459b",
+    "src/rag.py": "33fd182f30bac121b2d173fdd6ba7fe31d87593db044d6376da39c1540a0c25b",
+    "src/rate_limit.py": "ed2ccd25ce8f4df7e5873800ae21d501d2023eaa7878645422d3568182e33710",
+    "src/redaction.py": "5c7117871195db5f04951d37af1d006637e94f680e1fa563275e631d04e14758",
+    "src/retrieval/__init__.py": "83615c58a3929e43bf78b779d78259019a634f32a603dc0801b2fd01349acc23",
+    "src/retrieval/embeddings.py": "5d880552af54fb8e73648ac83c03c1490afe70d076cc899a7b603080b59cb0bc",
+    "src/retrieval/gemini.py": "3b76c512b82b2e46266c04fc51ea4da2045d7185c1df48f59ade7151e998235e",
+    "src/retrieval/index.py": "11d5a3eb429d3827d3a286e69e41947e3c788ba1eed383f88796b4365a79e0c9",
+    "src/retrieval/provider.py": "0c82050c15848d39ea27c812271cdf26a3f89aa39bc3f321806099b3bb3f5f94",
+    "src/rules/__init__.py": "599d0adbebaef6ccadfc52ff23b56f29d30fb14931a682d9f87c6ca27c083b27",
+    "src/rules/calculations.py": "8a13c2ab7fcdc13e77072098287036cca49a36f677dd10635fe2a454b700fb91",
+    "src/rules/policies.py": "1ac961b10ca837cfa42452b75f01e84bc8930d932880c69c4a9706d6aae7b816",
+    "src/rules/public_facts.py": "762f88bed35c8b4b35d4f75635240e2294f4f731e50bc0e41b9fcaff499fa8d3",
+    "src/schemas.py": "efd4312863605435015d0f2d02b731bb311f0dca7405f442129656724dfb065b",
+    "src/speech/__init__.py": "b6e65e482c28e5a0983e787d99e8ad19e5da0ab4d14ef8be0f1915c0bd876376",
+    "src/speech/audio.py": "e7fd9ed344151e1b9e119cb066ec755f01e141e51d311bb66817593f18d80f9b",
+    "src/speech/engine.py": "200a64ad3538fe253ca3beac468c395db3359d42190fc28881473a8401d9366d",
+    "src/speech/provider.py": "7895096a69d978f29eec0ed2a0ce5e0c24e83addd2cf5eccba009b8eb04d5555",
+    "src/speech/text.py": "673eac4b1aeca150aa35ecff0107aa632723839131f0fadc74e94b9ad0af786e",
+    "src/tools/__init__.py": "4b6da2e9ef27ef6e3496f5c5908c41dde7daa1f8f2bd9d17e8ec835a4a6d0983",
+    "src/tools/gateway.py": "9e80ca6f1d8ddfe3c837e61def1242de33e90c11e78b889eccddad8c71abdaae",
+    "src/tools/operations.py": "47beec6e323b5849b03e33bc981f1e924fd9aee0b0f304c13b6bf1771db753ed",
+    "src/web.py": "dcd50f3a5559edcf8fd802575969f40b9ddea66d573e4a45f6ce575ed0e5d14e"
+  }
+}

@@ -1,0 +1,6 @@
+{"case_id": "PQ0002", "decision_correct": false, "status": "generation_failed", "passed": false}
+{"case_id": "PQ0004", "decision_correct": false, "status": "generation_failed", "passed": false}
+{"case_id": "PQ0020", "decision_correct": false, "status": "unresolved", "passed": null}
+{"case_id": "PQ0022", "decision_correct": false, "status": "generation_failed", "passed": false}
+{"case_id": "PQ0054", "decision_correct": false, "status": "generation_failed", "passed": false}
+{"case_id": "PQ0057", "decision_correct": true, "status": "graded", "checks": {"case_id": "PQ0057", "facts_correct": true, "forbidden_claims_absent": true, "language_correct": true, "ai_disclosed": true, "rationale": "The reply correctly identifies the 7-day return window and the effective date, while clearly disclosing its AI identity."}, "passed": true}

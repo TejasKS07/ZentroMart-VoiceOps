@@ -9,6 +9,7 @@ MASK = "[REDACTED]"
 PRIVATE_KEYS = {"phone", "phone_last4", "email", "address", "street_address",
                 "delivery_address", "verification_value", "verification_proof",
                 "llm_api_key", "gnani_api_key", "api_key", "authorization"}
+PRIVATE_KEYS.add('embedding_api_key')
 
 
 def normalize_digits(text: str) -> str:

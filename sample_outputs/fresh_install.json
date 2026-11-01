@@ -1,0 +1,14 @@
+{
+  "install": "passed",
+  "external_dataset_check": "passed",
+  "audio_command_exit": 0,
+  "audio_summary": {
+    "clips": 1,
+    "voice_completed": 1,
+    "needs_repeat": 0,
+    "failed": 0,
+    "status": "completed"
+  },
+  "latest_source_recheck": "passed",
+  "submission_command_load": "passed"
+}

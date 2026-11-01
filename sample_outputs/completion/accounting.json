@@ -1,0 +1,12 @@
+{
+  "llm_attempts": 20,
+  "successful_llm_http_requests": 17,
+  "rate_limit_responses": 2,
+  "connection_failures": 1,
+  "peak_llm_requests_per_60_seconds": 10,
+  "gnani_attempts": 2,
+  "embedding_api_calls": 0,
+  "human_recordings": "not supplied; optional in the PS",
+  "current_model": "gemma-4-31b-it",
+  "human_semantic_review": "not performed"
+}

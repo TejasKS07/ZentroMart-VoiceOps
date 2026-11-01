@@ -1,0 +1,72 @@
+{
+  "status": "completed",
+  "transcript": "ek order par kitne coupon use kar sakte hain?",
+  "spoken_text": "Main ZentroMart ka AI support assistant hoon. Ek order par sirf ek coupon use kar sakte hain.",
+  "response": {
+    "schema_version": "1.0",
+    "decision": "answer",
+    "reply": "Main ZentroMart ka AI support assistant hoon. Ek order par sirf ek coupon use kar sakte hain.",
+    "language": "hi-en",
+    "evidence_ids": [
+      "CPN-1"
+    ],
+    "evidence": [
+      {
+        "evidence_id": "CPN-1",
+        "source": "kb/pol_coupons_offers.md",
+        "text": "## [CPN-1] One coupon per order\nOnly 1 coupon can be applied per order. Coupons cannot be combined, added after the order is placed, or exchanged for cash.",
+        "metadata": {
+          "doc_id": "POL-CPN",
+          "title": "Coupons and offers",
+          "doc_type": "policy",
+          "audience": "customer",
+          "language": "en",
+          "version": "1.2",
+          "effective_from": "2026-06-01",
+          "status": "current"
+        }
+      }
+    ],
+    "retrieved_evidence_ids": [],
+    "tool_events": [],
+    "timings_ms": {
+      "conversation": 0.22044100001039624
+    },
+    "generation": null,
+    "supported": true,
+    "diagnostics": {
+      "code": "grounded_answer",
+      "status": "completed",
+      "intent": "coupon",
+      "waiting_for": [],
+      "verified": false,
+      "verification_attempts_used": 0,
+      "mode": "offline",
+      "llm_used": false,
+      "tools": [],
+      "evidence_ids": [
+        "CPN-1"
+      ]
+    },
+    "claims": [
+      {
+        "text": "Ek order par sirf ek coupon use kar sakte hain.",
+        "evidence_ids": [
+          "CPN-1"
+        ]
+      }
+    ]
+  },
+  "error": null,
+  "timings_ms": {
+    "audio": 26.412103999973624,
+    "stt": 636.923171999797,
+    "agent": 0.23377200000140874,
+    "tts": 984.5140790000642,
+    "total": 1648.479320999968
+  },
+  "audio_seconds": 2.4,
+  "voice_complete": true,
+  "clip_id": "clip-0004",
+  "input_sha256": "92346dceb8d1b27c6bb3f607a27221f2f5e52eeab18cb5765bed42a2cc581a16"
+}

@@ -1,0 +1,132 @@
+{
+  "run_status": "finished",
+  "mode": "offline",
+  "conversations": 23,
+  "turns": 96,
+  "processed": 96,
+  "failed": 0,
+  "decision_matches": 96,
+  "decision_match_rate": 1.0,
+  "tool_call_matches": 96,
+  "tool_call_match_rate": 1.0,
+  "scenarios_passing_routing": 23,
+  "scenarios": {
+    "PC002": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC003": {
+      "processed": 5,
+      "turns": 5,
+      "passed_routing": true
+    },
+    "PC004": {
+      "processed": 5,
+      "turns": 5,
+      "passed_routing": true
+    },
+    "PC005": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC006": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC007": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC008": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC009": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC010": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC011": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC012": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC013": {
+      "processed": 5,
+      "turns": 5,
+      "passed_routing": true
+    },
+    "PC014": {
+      "processed": 5,
+      "turns": 5,
+      "passed_routing": true
+    },
+    "PC015": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC016": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC017": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC018": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC019": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC020": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC021": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC022": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC023": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    },
+    "PC024": {
+      "processed": 4,
+      "turns": 4,
+      "passed_routing": true
+    }
+  },
+  "fact_correctness": "not_scored",
+  "note": "Routing and tool-name matches are not factual or generated-answer accuracy."
+}

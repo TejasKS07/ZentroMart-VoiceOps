@@ -1,0 +1,41 @@
+{
+  "status": "needs_repeat",
+  "transcript": "",
+  "spoken_text": "I could not hear a clear message. Please record a shorter message again.",
+  "response": {
+    "schema_version": "1.0",
+    "decision": "clarify",
+    "reply": "I could not hear a clear message. Please record a shorter message again.",
+    "language": "en",
+    "evidence_ids": [],
+    "evidence": [],
+    "retrieved_evidence_ids": [],
+    "tool_events": [],
+    "timings_ms": {},
+    "generation": null,
+    "supported": null,
+    "diagnostics": {
+      "code": "silent_audio",
+      "status": "needs_input",
+      "waiting_for": [
+        "clear_audio"
+      ],
+      "tools": [],
+      "llm_used": false
+    },
+    "claims": []
+  },
+  "error": {
+    "stage": "audio",
+    "code": "silent_audio",
+    "message": "The recording is silent or too quiet. Please record again closer to the microphone."
+  },
+  "timings_ms": {
+    "tts": 946.2544299999536,
+    "total": 975.8012029999463
+  },
+  "audio_seconds": null,
+  "voice_complete": false,
+  "clip_id": "clip-0005",
+  "input_sha256": "643f8a8dc8bd9c19225afffad2becfec5426180b3749cb208abdf1a6c8354efc"
+}

@@ -43,8 +43,8 @@ def write_report(run_dir: Path) -> None:
 
 
 def baseline(settings: Settings, *, dataset_dir: Path, variant: str = "original", limit: int | None = None,
-             judge: bool = False, progress=None, stage: str = "baseline", index=None) -> tuple[Path, dict]:
-    client = ChatCompletionClient(settings)
+             judge: bool = False, progress=None, stage: str = "baseline", index=None, judge_batch_size=10, request_limiter=None) -> tuple[Path, dict]:
+    client = ChatCompletionClient(settings,request_limiter=request_limiter)
     if stage not in {"baseline", "rag"} or (stage == "rag" and index is None):
         raise ValueError("RAG experiments need a loaded knowledge index")
     if variant not in {"original", "asr"}:
@@ -74,14 +74,19 @@ def baseline(settings: Settings, *, dataset_dir: Path, variant: str = "original"
     agent = BaselineAgent(client)
     if stage == "rag":
         from ..rag import RAG_PROMPT, RAG_PROMPT_SHA256, RAG_PROMPT_VERSION, RagAgent
-        agent = RagAgent(client, index)
+        from ..dataset import PublicKnowledge
+        agent = RagAgent(client, index, knowledge=PublicKnowledge.load(dataset_dir))
+        if hasattr(index.embedder,'prefetch_queries'):
+            index.embedder.prefetch_queries([case.customer.text for case in cases])
         metadata.update(stage="step2_rag", system_prompt=RAG_PROMPT, prompt_sha256=RAG_PROMPT_SHA256,
                         prompt_version=RAG_PROMPT_VERSION, index_fingerprint=index.fingerprint,
-                        embedding_model=index.embedder.name, top_k=agent.top_k)
+                        embedding_model=index.embedder.name, top_k=agent.top_k,
+                        embedding_requests=getattr(index.embedder,'network_requests',0))
     summary = run_questions(cases, agent.respond, run_dir,
                             secrets=secrets, metadata=metadata, progress=progress)
     write_report(run_dir)
     if judge and summary["run_status"] == "finished":
-        grade_run(run_dir, cases, client, secrets=secrets, progress=progress)
+        from .judge import grade_run_batched
+        grade_run_batched(run_dir,cases,client,batch_size=judge_batch_size,secrets=secrets,progress=progress)
         write_report(run_dir)
     return run_dir, summary

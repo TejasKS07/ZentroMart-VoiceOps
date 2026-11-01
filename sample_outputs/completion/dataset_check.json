@@ -1,0 +1,45 @@
+{
+  "status": "offline_passed",
+  "configuration": {
+    "dataset_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/Dataset",
+    "runtime_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/runtime",
+    "reference_date": "2026-10-20",
+    "llm_configured": true,
+    "llm_key_present": true,
+    "gnani_key_present": true,
+    "llm_calls_enabled": false,
+    "embedding_provider": "gemini",
+    "embedding_key_present": true,
+    "tts_model": "timbre-v2.5",
+    "tts_voice": "Kaveri"
+  },
+  "dataset_dir": "/home/tejas-kumar-s/SmDih/ZentroMart-VoiceOps/Dataset",
+  "dataset": {
+    "customers": 300,
+    "orders": 1000,
+    "order_items": 1783,
+    "products": 70,
+    "pincodes": 36,
+    "holidays": 4,
+    "support_logs": 244,
+    "kb_documents": 21
+  },
+  "practice": {
+    "questions": 52,
+    "conversations": 23,
+    "conversation_turns": 96,
+    "question_languages": [
+      "en",
+      "hi",
+      "hi-en"
+    ],
+    "agent_runs": 0,
+    "scores": "not_run"
+  },
+  "dependencies": {
+    "gnani-vachana": "0.9.0",
+    "python-dotenv": "1.2.4"
+  },
+  "supplied_validator": "passed",
+  "live_connectivity": "not_tested"
+}

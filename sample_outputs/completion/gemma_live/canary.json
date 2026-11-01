@@ -1,0 +1,114 @@
+{
+  "kind": "one_request_integration_canary",
+  "model": "gemma-4-26b-a4b-it",
+  "case_id": "PQ0022",
+  "status": "completed",
+  "response": {
+    "schema_version": "1.0",
+    "decision": "answer",
+    "reply": "Hello! I am your ZentroMart AI assistant. Your credit card refund is expected to reach you between 24 October 2026 and 27 October 2026.",
+    "language": "en",
+    "evidence_ids": [
+      "REF-2",
+      "KB-00.3"
+    ],
+    "evidence": [
+      {
+        "evidence_id": "REF-2",
+        "source": "kb/pol_refunds.md",
+        "text": "## [REF-2] How long refunds take after initiation\nRefunds go back to the original payment method. Timelines are counted in business days from the day the refund is initiated.\n\n| Payment method | Time to reach you |\n| --- | --- |\n| UPI | 1 to 3 business days |\n| Credit or debit card | 5 to 7 business days |\n| Net banking | 3 to 5 business days |\n| ZentroMart Wallet | Instant, within 2 hours |\n| Bank transfer (NEFT) for cash-on-delivery orders | 5 to 7 business days |\n| ZentroMart Wallet for cash-on-delivery orders | Instant, within 2 hours |",
+        "metadata": {
+          "doc_id": "POL-REF",
+          "title": "Refunds policy",
+          "doc_type": "policy",
+          "audience": "customer",
+          "language": "en",
+          "version": "2.1",
+          "effective_from": "2026-06-15",
+          "status": "current"
+        }
+      },
+      {
+        "evidence_id": "KB-00.3",
+        "source": "kb/00_about_this_knowledge_base.md",
+        "text": "## [KB-00.3] Business days\nA business day is Monday to Saturday, excluding the warehouse holidays below. Refund and logistics timelines are counted in business days. Return windows are counted in calendar days.\n\n| Date | Holiday |\n| --- | --- |\n| 2026-08-15 | Independence Day |\n| 2026-10-02 | Gandhi Jayanti |\n| 2026-10-19 | Warehouse closure (festival) |\n| 2026-11-09 | Warehouse closure (festival) |",
+        "metadata": {
+          "doc_id": "KB-00",
+          "title": "About this knowledge base",
+          "doc_type": "meta",
+          "audience": "agent",
+          "language": "en",
+          "version": "1.2",
+          "effective_from": "2026-08-01",
+          "status": "current"
+        }
+      }
+    ],
+    "retrieved_evidence_ids": [
+      "KB-00.1",
+      "KB-00.2",
+      "KB-00.3",
+      "KB-00.4",
+      "PAY-2",
+      "PAY-3",
+      "PAY-4",
+      "REF-1",
+      "REF-2",
+      "REF-3",
+      "REF-4",
+      "REF-5",
+      "REF-6",
+      "RET-2",
+      "RET-6",
+      "RET-7",
+      "RET-8",
+      "RET-9",
+      "ESC-1",
+      "ESC-2",
+      "ESC-3",
+      "ESC-4",
+      "FAQ-1"
+    ],
+    "tool_events": [],
+    "timings_ms": {
+      "retrieval": 1.7885739999883299,
+      "llm": 8441.900071999953
+    },
+    "generation": {
+      "raw_output": "{\"decision\":\"answer\",\"reply\":\"Hello! I am your ZentroMart AI assistant. Your credit card refund is expected to reach you between 24 October 2026 and 27 October 2026.\",\"language\":\"en\",\"supported\":true,\"evidence_ids\":[\"REF-2\",\"KB-00.3\"],\"claims\":[{\"text\":\"Your credit card refund is expected to reach you between 24 October 2026 and 27 October 2026.\",\"evidence_ids\":[\"REF-2\"]}]}",
+      "model": "gemma-4-26b-a4b-it",
+      "response_id": "AUHmavf_Htjg694P3I_kmQI",
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5210,
+        "completion_tokens": 116,
+        "total_tokens": 5326
+      },
+      "latency_ms": 8441.900071999953,
+      "attempts": 1
+    },
+    "supported": true,
+    "diagnostics": {},
+    "claims": [
+      {
+        "text": "Your credit card refund is expected to reach you between 24 October 2026 and 27 October 2026.",
+        "evidence_ids": [
+          "REF-2"
+        ]
+      }
+    ]
+  },
+  "request_accounting": {
+    "user_rpm_limit": 100,
+    "safety_capacity": 90,
+    "window_seconds": 60,
+    "approved_attempt_limit": 1,
+    "reserved_attempts": 1,
+    "peak_quota_weight_in_window": 1,
+    "http_attempts": 1,
+    "successful_http_requests": 1,
+    "embedding_http_requests": 0,
+    "chat_completion_http_requests": 1,
+    "rate_limit_responses": 0
+  }
+}

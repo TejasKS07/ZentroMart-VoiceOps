@@ -80,6 +80,7 @@ class ToolGateway:
             connection.execute("CREATE TABLE IF NOT EXISTS tickets (key TEXT PRIMARY KEY, ticket_id TEXT NOT NULL)")
         self._states: dict[str, dict[str, OrderState]] = {}
         self._active: dict[str, str] = {}
+        self._pending_proofs: dict[str, list[str]] = {}
         self._lock = RLock()
 
     def _state(self, session_id: str) -> tuple[str, OrderState]:
@@ -154,9 +155,27 @@ class ToolGateway:
             # success. Pincode availability is a separate public-table lookup.
             return deepcopy({k: v for k, v in state.facts.items() if k not in forbidden})
 
+    def verification_state(self, session_id: str) -> dict:
+        """Public controller state; never includes proofs or unverified facts."""
+        with self._lock:
+            if session_id not in self._active:
+                return {"order_id": None, "verified": False, "attempts": 0}
+            order_id, state = self._state(session_id)
+            return {"order_id": order_id, "verified": state.verified, "attempts": state.attempts}
+
+    def remember_proof(self, session_id: str, value: str) -> None:
+        """Redact explicitly supplied proof even before an order is selected."""
+        with self._lock:
+            self._pending_proofs.setdefault(session_id, []).append(value)
+
+    def deactivate(self, session_id: str) -> None:
+        """An unspecified new order must not inherit the previous active order."""
+        with self._lock:
+            self._active.pop(session_id, None)
+
     def sanitize(self, session_id: str, value):
         states = self._states.get(session_id, {})
-        proofs = tuple(proof for state in states.values() for proof in state.proofs)
+        proofs = tuple(proof for state in states.values() for proof in state.proofs) + tuple(self._pending_proofs.get(session_id, ()))
         result = redact(value, proofs)
         def clean(item):
             if isinstance(item, dict):
@@ -200,3 +219,4 @@ class ToolGateway:
         with self._lock:
             self._states.pop(session_id, None)
             self._active.pop(session_id, None)
+            self._pending_proofs.pop(session_id, None)

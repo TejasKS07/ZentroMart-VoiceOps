@@ -1,2 +1,1 @@
-"""Local multilingual retrieval; never imports evaluation labels or Gemini."""
-
+"""Embedding-backed retrieval over public policy and catalog sources."""

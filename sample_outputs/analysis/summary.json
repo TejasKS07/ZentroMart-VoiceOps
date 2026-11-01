@@ -1,0 +1,204 @@
+{
+  "retrieval": {
+    "original": {
+      "mode": "retrieval_only",
+      "variant": "original",
+      "k": 12,
+      "embedding_model": "google/gemini-embedding-001-768",
+      "index_fingerprint": "796e1b080d558132fa6763a4ed29e782a7dd46306553d0f66e62202f3be7922f",
+      "questions": 52,
+      "questions_with_gold": 47,
+      "mean_recall_at_k": 0.9219858156028369,
+      "mean_context_recall": 1.0,
+      "mean_precision_at_k": 0.14716312056737588,
+      "mean_context_precision": 0.055355351184770085,
+      "mean_context_chunks": 35.30769230769231,
+      "per_language": {
+        "hi-en": {
+          "questions": 10,
+          "context_recall": 1.0
+        },
+        "en": {
+          "questions": 30,
+          "context_recall": 1.0
+        },
+        "hi": {
+          "questions": 7,
+          "context_recall": 1.0
+        }
+      },
+      "generation_accuracy": "not_scored",
+      "generation_calls": 0,
+      "embedding_requests": 0
+    },
+    "asr": {
+      "mode": "retrieval_only",
+      "variant": "asr",
+      "k": 12,
+      "embedding_model": "google/gemini-embedding-001-768",
+      "index_fingerprint": "796e1b080d558132fa6763a4ed29e782a7dd46306553d0f66e62202f3be7922f",
+      "questions": 52,
+      "questions_with_gold": 47,
+      "mean_recall_at_k": 0.9219858156028369,
+      "mean_context_recall": 1.0,
+      "mean_precision_at_k": 0.14716312056737588,
+      "mean_context_precision": 0.05513483402131863,
+      "mean_context_chunks": 35.51923076923077,
+      "per_language": {
+        "hi-en": {
+          "questions": 10,
+          "context_recall": 1.0
+        },
+        "en": {
+          "questions": 30,
+          "context_recall": 1.0
+        },
+        "hi": {
+          "questions": 7,
+          "context_recall": 1.0
+        }
+      },
+      "generation_accuracy": "not_scored",
+      "generation_calls": 0,
+      "embedding_requests": 0
+    }
+  },
+  "runs": [
+    {
+      "stage": "baseline",
+      "variant": "original",
+      "generation_error_counts": {},
+      "generation_errors": [],
+      "failed_judge_checks": {
+        "facts_correct": 41
+      },
+      "median_generation_ms": 1255.001748499808
+    },
+    {
+      "stage": "rag",
+      "variant": "original",
+      "generation_error_counts": {
+        "Claim contains unsupported numbers": 8,
+        "Invalid claim shape": 3
+      },
+      "generation_errors": [
+        {
+          "case_id": "PQ0020",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0022",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0024",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0028",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0033",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0036",
+          "reason": "Invalid claim shape"
+        },
+        {
+          "case_id": "PQ0049",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0054",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0056",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0057",
+          "reason": "Invalid claim shape"
+        },
+        {
+          "case_id": "PQ0058",
+          "reason": "Invalid claim shape"
+        }
+      ],
+      "failed_judge_checks": {
+        "facts_correct": 15,
+        "language_correct": 1
+      },
+      "median_generation_ms": 1552.6728904999345
+    },
+    {
+      "stage": "baseline",
+      "variant": "asr",
+      "generation_error_counts": {},
+      "generation_errors": [],
+      "failed_judge_checks": {
+        "facts_correct": 43
+      },
+      "median_generation_ms": 1202.3588180002207
+    },
+    {
+      "stage": "rag",
+      "variant": "asr",
+      "generation_error_counts": {
+        "Numeric reply facts lack claim provenance": 2,
+        "Claim contains unsupported numbers": 8
+      },
+      "generation_errors": [
+        {
+          "case_id": "PQ0015",
+          "reason": "Numeric reply facts lack claim provenance"
+        },
+        {
+          "case_id": "PQ0019",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0020",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0022",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0029",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0033",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0046",
+          "reason": "Numeric reply facts lack claim provenance"
+        },
+        {
+          "case_id": "PQ0049",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0056",
+          "reason": "Claim contains unsupported numbers"
+        },
+        {
+          "case_id": "PQ0059",
+          "reason": "Claim contains unsupported numbers"
+        }
+      ],
+      "failed_judge_checks": {
+        "facts_correct": 10
+      },
+      "median_generation_ms": 1530.6503960002829
+    }
+  ],
+  "additional_provider_requests": 0,
+  "comparison_controls": "same source, practice file, model, generation settings and case IDs",
+  "independently_verified_peak_quota_units": 70
+}

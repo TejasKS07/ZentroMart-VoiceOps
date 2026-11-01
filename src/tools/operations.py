@@ -12,6 +12,7 @@ from .gateway import ToolGateway, identifier
 
 class SupportOperations:
     def __init__(self, dataset_dir: Path, runtime_dir: Path, *, gateway: ToolGateway | None = None):
+        self.dataset_dir = dataset_dir.resolve()
         self.knowledge = PublicKnowledge.load(dataset_dir)
         self.calculator = PolicyCalculator(PolicyRules.from_knowledge(self.knowledge))
         self.gateway = gateway or ToolGateway(dataset_dir, runtime_dir)

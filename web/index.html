@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f4">
+  <meta name="description" content="ZentroMart support workspace. Get help with orders, returns, refunds and delivery.">
+  <title>ZentroMart · Support workspace</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m3 7 9-5 9 5v10l-9 5-9-5zM3 7l9 5 9-5M12 12v10M7.5 4.5l9 5"/></symbol>
+    <symbol id="i-return" viewBox="0 0 24 24"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 8V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v12H5a3 3 0 0 1-3-3V6M20 12h-5v5h5"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M1 3h13v13H1zM14 8h4l4 4v4h-8"/><circle cx="5" cy="18" r="3"/><circle cx="18" cy="18" r="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6zM8 12l3 3 5-6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1zm0 0v15"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="/" aria-label="ZentroMart home"><span class="brand-mark">z<span>·</span></span><span>ZentroMart<span class="brand-subtitle">SUPPORT WORKSPACE</span></span></a>
+      <button class="icon-button history-close" id="close-history" aria-label="Close chat history"><svg><use href="#i-close"/></svg></button><div class="nav-label">WORKSPACE</div>
+      <nav>
+        <button class="nav-item active" id="support-nav" aria-current="page"><svg><use href="#i-chat"/></svg><span>Support desk</span><span class="nav-indicator"></span></button>
+        <button class="nav-item" id="guide-button"><svg><use href="#i-book"/></svg><span>Getting started</span></button>
+        <button class="nav-item" id="status-button"><svg><use href="#i-pulse"/></svg><span>Conversation details</span></button>
+      </nav>
+      <section class="history-section" aria-label="Chat history"><div class="history-heading">RECENT CHATS</div><div id="history-list"><p class="history-empty">Your conversations will appear here.</p></div></section><div class="sidebar-note"><span class="small-label">A LITTLE LESS BACK-AND-FORTH</span><p>Clear answers.<br>A simpler next step.</p><span class="note-line"></span></div>
+      <div class="workspace-status"><span class="status-dot"></span><div><strong>Local workspace</strong><span id="sidebar-mode">Connecting…</span></div><svg><use href="#i-shield"/></svg></div>
+      <div class="sidebar-footer">ZentroMart VoiceOps <span>v0.4</span></div>
+    </aside>
+    <main>
+      <header class="topbar"><div class="breadcrumb"><span class="mobile-brand">ZentroMart</span><span>Workspace</span><span class="slash">/</span><strong>Support desk</strong></div><div class="topbar-right"><span class="local-label"><span class="status-dot"></span> Local session</span><span class="avatar" aria-label="Your workspace">ZM</span></div></header>
+      <div class="workspace">
+        <div class="page-heading"><div><div class="eyebrow">HERE TO HELP</div><h1>Support, made simple.</h1><p>One conversation. A clear way forward.</p></div><div class="heading-actions"><button class="button history-toggle" id="history-toggle" aria-label="Open chat history"><svg><use href="#i-chat"/></svg>History</button><button class="button details-toggle" id="details-toggle" aria-controls="inspector" aria-expanded="false"><svg><use href="#i-info"/></svg>Details</button><button class="button" id="new-conversation"><svg><use href="#i-plus"/></svg>New conversation</button></div></div>
+        <div id="connection-error" class="connection-error" role="alert" hidden><span id="connection-error-text"></span><button id="reconnect-button">Reconnect</button></div>
+        <div class="workspace-grid">
+          <section class="chat-card" aria-label="Support conversation">
+            <header class="chat-header"><div class="assistant-mark"><svg><use href="#i-chat"/></svg></div><div><h2>ZentroMart assistant <span class="ai-label">AI</span></h2><p>English <span>·</span> हिंदी <span>·</span> Hinglish</p></div><span class="ready-pill" id="ready-state"><span class="status-dot"></span><span id="ready-label">Connecting</span></span></header>
+            <div class="conversation-body" id="conversation-body">
+              <div class="welcome" id="welcome"><div class="welcome-icon"><svg><use href="#i-chat"/></svg><span class="spark">✦</span></div><div class="eyebrow">LET’S SORT IT OUT</div><h2>How can we help today?</h2><p>Ask about an order or explore a policy.<br>We’ll take it one step at a time.</p>
+                <div class="suggestions">
+                  <button data-prompt="I'd like to track my order."><span class="suggestion-icon"><svg><use href="#i-box"/></svg></span><strong>Track an order</strong><span>Find out where things stand</span><svg class="suggestion-arrow"><use href="#i-arrow"/></svg></button>
+                  <button data-prompt="I'd like to return an item."><span class="suggestion-icon"><svg><use href="#i-return"/></svg></span><strong>Return an item</strong><span>Understand your next steps</span><svg class="suggestion-arrow"><use href="#i-arrow"/></svg></button>
+                  <button data-prompt="Explain the refund policy in general."><span class="suggestion-icon"><svg><use href="#i-wallet"/></svg></span><strong>Refund timelines</strong><span>Know what to expect</span><svg class="suggestion-arrow"><use href="#i-arrow"/></svg></button>
+                  <button data-prompt="I'd like to check pincode serviceability."><span class="suggestion-icon"><svg><use href="#i-truck"/></svg></span><strong>Delivery options</strong><span>Check availability in your area</span><svg class="suggestion-arrow"><use href="#i-arrow"/></svg></button>
+                </div>
+                <div class="welcome-note"><svg><use href="#i-info"/></svg>For an existing order, have your 8-digit order ID handy.</div>
+              </div>
+              <div class="messages" id="messages" role="log" aria-label="Messages" aria-live="polite" aria-relevant="additions"></div>
+            </div>
+            <form class="composer" id="chat-form"><div class="voice-toolbar"><div class="voice-actions"><button type="button" class="voice-action" id="record-button" disabled><svg><use href="#i-mic"/></svg><span id="record-label">Record</span></button><button type="button" class="voice-action" id="upload-button" disabled><svg><use href="#i-upload"/></svg>Upload audio</button><input type="file" id="audio-file" accept=".wav,.mp3,.flac,.ogg,.m4a,.aac,.webm" hidden><label class="sr-only" for="speech-language">Speech language</label><select id="speech-language" aria-label="Speech language"><option value="en-IN">English</option><option value="hi-IN">हिंदी</option><option value="hi-en">Hinglish</option></select></div><span id="voice-status" role="status">Checking speech…</span></div><label for="message" class="sr-only">Your message</label><div class="input-wrap"><textarea id="message" name="message" placeholder="Ask a question or describe the issue…" maxlength="2000" rows="1" autocomplete="off" spellcheck="true" disabled></textarea><button class="send-button" id="send-button" type="submit" disabled aria-label="Send message"><svg><use href="#i-up"/></svg></button></div><div class="composer-footer"><span>Enter to send <span class="footer-dot">·</span> Shift + Enter for a new line</span><span><svg><use href="#i-shield"/></svg>Verification values are masked</span></div></form>
+          </section>
+          <aside class="inspector" id="inspector" aria-label="Conversation details">
+            <div class="inspector-title"><h2>Conversation details</h2><span class="live-label">LIVE</span></div>
+            <section class="detail-card"><div class="detail-heading"><span class="detail-icon"><svg><use href="#i-pulse"/></svg></span><h3>Latest turn</h3><span class="turn-count" id="turn-count">—</span></div><div class="result-banner" id="result-banner"><span class="result-dot"></span><span id="result-label">Ready when you are</span></div><p class="detail-description" id="result-description">Send a message to see what was understood and what happens next.</p><dl class="fact-list"><div><dt>Topic</dt><dd id="topic-value">Not set</dd></div><div><dt>Waiting for</dt><dd id="waiting-value">Your message</dd></div><div><dt>Identity</dt><dd id="identity-value">Not verified</dd></div></dl></section>
+            <section class="detail-card"><div class="detail-heading"><span class="detail-icon"><svg><use href="#i-check"/></svg></span><h3>Activity</h3></div><div id="activity" class="activity-list"><p class="empty-detail">No tools used yet.</p></div></section>
+            <section class="detail-card sources-card"><div class="detail-heading"><span class="detail-icon"><svg><use href="#i-book"/></svg></span><h3>Sources</h3><span class="source-count" id="source-count">0</span></div><div id="sources"><p class="empty-detail">Policy references appear here when they support an answer.</p></div></section>
+            <div class="mode-note"><svg><use href="#i-info"/></svg><div><strong id="mode-title">Connecting to workspace</strong><p id="mode-description">Checking local support availability.</p></div></div>
+            <details class="technical-details"><summary>Technical details</summary><pre id="technical-output">No turn diagnostics yet.</pre></details>
+          </aside>
+        </div>
+        <footer class="page-footer"><span>Thoughtful support, one step at a time.</span><span>Text workspace <span>·</span> Gnani speech</span></footer>
+      </div>
+    </main>
+  </div>
+  <dialog id="guide-dialog"><div class="dialog-header"><div><div class="eyebrow">GETTING STARTED</div><h2>A clear place to start.</h2></div><button id="close-guide" class="icon-button" aria-label="Close guide"><svg><use href="#i-close"/></svg></button></div><p>Describe the issue in English, Hindi, or Hinglish. You can also choose a suggested question.</p><ol><li><strong>Start with the issue.</strong><span>Try “track my order” or “how do refunds work?”</span></li><li><strong>Verify for order details.</strong><span>Use your 8-digit order ID, then one requested verification value.</span></li><li><strong>See what happened.</strong><span>Conversation details show validation, tools, and the policy sources behind each reply.</span></li></ol><div class="guide-note">This chat can look up orders and create support tickets. Placing orders, cancelling orders, and issuing refunds are unavailable here.</div><button class="button primary-button" id="start-chatting">Start chatting<svg><use href="#i-arrow"/></svg></button></dialog>
+</body>
+</html>

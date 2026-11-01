@@ -1,0 +1,22 @@
+[
+  {
+    "stage": "baseline",
+    "variant": "original",
+    "directory": "evaluation/baseline_original"
+  },
+  {
+    "stage": "rag",
+    "variant": "original",
+    "directory": "evaluation/rag_original"
+  },
+  {
+    "stage": "baseline",
+    "variant": "asr",
+    "directory": "evaluation/baseline_asr"
+  },
+  {
+    "stage": "rag",
+    "variant": "asr",
+    "directory": "evaluation/rag_asr"
+  }
+]

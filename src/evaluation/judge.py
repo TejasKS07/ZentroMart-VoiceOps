@@ -98,3 +98,64 @@ def grade_run(run_dir: Path, cases: tuple[EvaluationCase, ...], client: ChatComp
                    "note": "Model-judged practice score; requires human spot-checking, not an organizer score."}
         save_json(run_dir / "grading_summary.json", summary)
     return summary
+
+
+def grade_run_batched(run_dir, cases, client, *, batch_size=10, secrets=(), progress=None):
+    """The same rubric, up to ten independent saved answers per API request."""
+    if not 1<=batch_size<=10:raise ValueError('Judge batch size must be 1 through 10')
+    rows=[json.loads(line) for line in (run_dir/'results.jsonl').read_text().splitlines() if line]
+    manifest=json.loads((run_dir/'manifest.json').read_text())
+    if [r['case_id'] for r in rows]!=manifest['case_ids']:raise ValueError('Finish generation before grading')
+    by_id={case.case_id:case for case in cases}
+    if any(r['case_id'] not in by_id for r in rows):raise ValueError('Unknown evaluation case')
+    prompt=JUDGE_PROMPT.replace('Return only JSON with exactly these keys:',
+        'You receive an array of independent evaluation records. Judge each independently. Return a JSON array in the same order, with case_id plus exactly these keys for each item:')
+    scores=[]
+    save_json(run_dir/'judge_manifest.json',{'version':'semantic-judge-batched-v1','batch_size':batch_size,
+        'system_prompt':prompt,'requested_model':client.settings.llm_model,'generation_parameters':client.settings.generation_parameters()})
+    with (run_dir/'judgements.jsonl').open('x',encoding='utf-8') as output,(run_dir/'judge_batches.jsonl').open('x',encoding='utf-8') as batches:
+        for start in range(0,len(rows),batch_size):
+            group=rows[start:start+batch_size]
+            completed=[r for r in group if r['status']=='completed']
+            results={}
+            if completed:
+                trace=None;batch_error=None
+                payload=[]
+                for row in completed:
+                    case=by_id[row['case_id']]
+                    payload.append({'case_id':case.case_id,'question':case.customer.text,'candidate_reply':row['response']['reply'],
+                        'reference_answer':case.labels['reference_answer'],'must_include':case.labels['must_include'],
+                        'must_not_include':case.labels['must_not_include'],'reply_language':case.labels.get('reply_language') or case.language,'answerable':case.labels.get('answerable')})
+                try:
+                    trace=client.complete([{'role':'system','content':prompt},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}])
+                    raw=trace.raw_output.strip()
+                    import re
+                    fence=re.fullmatch(r'```(?:json)?\s*\n?(.*?)\n?```',raw,re.S)
+                    data=json.loads(fence[1] if fence else raw)
+                    if trace.finish_reason not in {'','stop'} or not isinstance(data,list) or len(data)!=len(completed):raise ValueError('Invalid batch judge result')
+                    if [item.get('case_id') for item in data]!=[r['case_id'] for r in completed]:raise ValueError('Batch judge case mismatch')
+                    for item in data:
+                        if set(item)!={*CHECKS,'rationale','case_id'} or any(type(item[k]) is not bool for k in CHECKS) or not isinstance(item['rationale'],str):raise ValueError('Invalid batch judge checks')
+                    results={item['case_id']:item for item in data}
+                except Exception as exc:
+                    results={}
+                    batch_error=type(exc).__name__
+                finally:
+                    batch={'case_ids':[r['case_id'] for r in completed],'status':'graded' if results else 'unresolved'}
+                    if trace is not None:batch['generation']=trace.to_dict(secrets)
+                    if batch_error:batch['error_type']=batch_error
+                    batches.write(json.dumps(batch,ensure_ascii=False)+'\n');batches.flush()
+            for row in group:
+                item=results.get(row['case_id'])
+                score={'case_id':row['case_id'],'decision_correct':row.get('decision_correct',False)}
+                if item:score.update(status='graded',checks=item,passed=bool(score['decision_correct'] and all(item[k] for k in CHECKS)))
+                elif row.get('error_code')=='invalid_agent_output':score.update(status='generation_failed',passed=False)
+                else:score.update(status='unresolved',passed=None)
+                scores.append(score);output.write(json.dumps(redact(score,secrets),ensure_ascii=False)+'\n');output.flush()
+            if progress:progress(f'Batched grading {len(scores)}/{len(rows)}')
+    correct=sum(s['passed'] is True for s in scores);unresolved=sum(s['passed'] is None for s in scores)
+    summary={'method':'provisional_model_judge','judge_batch_size':batch_size,'cases':len(rows),'correct':correct,'unresolved':unresolved,
+        'status':'complete' if not unresolved else 'incomplete','accuracy':correct/len(rows) if rows and not unresolved else None,
+        'correctness_lower_bound':correct/len(rows) if rows else None,'note':'Batched model-judged practice score; requires human spot-checking, not an organizer score.'}
+    save_json(run_dir/'grading_summary.json',summary)
+    return summary

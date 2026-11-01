@@ -1,0 +1,120 @@
+{
+  "status": "completed",
+  "transcript": "I would like a human agent",
+  "spoken_text": "I'm ZentroMart's AI support assistant. I've created a ticket; a human colleague will contact you.",
+  "response": {
+    "schema_version": "1.0",
+    "decision": "escalate",
+    "reply": "I'm ZentroMart's AI support assistant. I've created a ticket; a human colleague will contact you.",
+    "language": "en",
+    "evidence_ids": [
+      "ESC-1",
+      "ESC-2",
+      "ESC-3"
+    ],
+    "evidence": [
+      {
+        "evidence_id": "ESC-1",
+        "source": "kb/agent_escalation_handoff.md",
+        "text": "## [ESC-1] When to hand over to a human\nHand over at once when any of these is true:\n\n1. **Damaged, defective or wrong item worth more than ₹10,000.**\n2. **Customer reports an order, payment or account activity they did not make.**\n3. **Customer mentions legal action, a consumer court or a police complaint.**\n4. **Third or later contact about the same issue within 7 days.**\n5. **Refund more than 3 business days past its maximum timeline.**\n6. **Customer asks for a human agent.**\n7. **Product safety risk such as a swelling battery, burning smell, sparks or injury.**\n\nFor the repeat-contact rule, use the `contacts_last_7_days` field returned by order lookup. It counts earlier contacts only, not the current one. Escalate when it is 2 or more.",
+        "metadata": {
+          "doc_id": "AGT-ESC",
+          "title": "Escalation and human handover",
+          "doc_type": "agent_guide",
+          "audience": "agent",
+          "language": "en",
+          "version": "2.0",
+          "effective_from": "2026-07-01",
+          "status": "current"
+        }
+      },
+      {
+        "evidence_id": "ESC-2",
+        "source": "kb/agent_escalation_handoff.md",
+        "text": "## [ESC-2] What to do first\nCreate a ticket with `create_ticket` before handing over. Tell the customer a human colleague will contact them, and never promise an outcome, amount or time beyond what a policy states.",
+        "metadata": {
+          "doc_id": "AGT-ESC",
+          "title": "Escalation and human handover",
+          "doc_type": "agent_guide",
+          "audience": "agent",
+          "language": "en",
+          "version": "2.0",
+          "effective_from": "2026-07-01",
+          "status": "current"
+        }
+      },
+      {
+        "evidence_id": "ESC-3",
+        "source": "kb/agent_escalation_handoff.md",
+        "text": "## [ESC-3] Handover summary\nThe ticket summary must contain: the customer's issue, the detected intent, the order ID if any, what the customer has already told you, what you already checked, and the reason for escalation.",
+        "metadata": {
+          "doc_id": "AGT-ESC",
+          "title": "Escalation and human handover",
+          "doc_type": "agent_guide",
+          "audience": "agent",
+          "language": "en",
+          "version": "2.0",
+          "effective_from": "2026-07-01",
+          "status": "current"
+        }
+      }
+    ],
+    "retrieved_evidence_ids": [],
+    "tool_events": [
+      {
+        "name": "create_ticket",
+        "status": "succeeded",
+        "details": {
+          "created": true,
+          "ticket_id": "TKT498a1a98e03e43d9a6c911e7c04e5e53"
+        }
+      }
+    ],
+    "timings_ms": {
+      "conversation": 7.1200140000655665
+    },
+    "generation": null,
+    "supported": true,
+    "diagnostics": {
+      "code": "ticket_created",
+      "status": "completed",
+      "intent": "human",
+      "waiting_for": [],
+      "verified": false,
+      "verification_attempts_used": 0,
+      "mode": "live_policy",
+      "llm_used": false,
+      "tools": [
+        {
+          "name": "create_ticket",
+          "status": "succeeded"
+        }
+      ],
+      "evidence_ids": [
+        "ESC-1",
+        "ESC-2",
+        "ESC-3"
+      ]
+    },
+    "claims": [
+      {
+        "text": "I've created a ticket; a human colleague will contact you.",
+        "evidence_ids": [
+          "ESC-1",
+          "ESC-2",
+          "ESC-3"
+        ]
+      }
+    ]
+  },
+  "error": null,
+  "timings_ms": {
+    "audio": 30.379100000118342,
+    "stt": 779.1734380000435,
+    "agent": 7.13226399989253,
+    "tts": 1301.5586450001138,
+    "total": 2118.5897319999185
+  },
+  "audio_seconds": 1.44,
+  "voice_complete": true
+}

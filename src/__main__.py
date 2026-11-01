@@ -1,4 +1,4 @@
-"""VoiceOps setup checks, prompt-only answers and reproducible baseline runs."""
+"""VoiceOps checks, grounded text support and reproducible evaluation runs."""
 
 import argparse
 from datetime import datetime, timezone
@@ -50,37 +50,80 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--stage", choices=("baseline", "rag"), default="baseline")
     grade = sub.add_parser("grade", help="Grade a finished run without regenerating its answers")
     grade.add_argument("run_dir", type=Path)
-    index_command = sub.add_parser("index", help="Build the local multilingual vector index; no Gemini calls")
+    index_command = sub.add_parser("index", help="Build the configured embedding index; embedding API calls may apply")
     index_command.add_argument("--download-model", action="store_true", help="Permit public embedding-model download")
-    retrieve = sub.add_parser("retrieve", help="Search the local index without generating an answer")
+    retrieve = sub.add_parser("retrieve", help="Search the policy index without generating an answer")
     retrieve.add_argument("query")
     retrieve.add_argument("--k", type=int, default=12)
     retrieve.add_argument("--delivered-on", type=str, help="Known delivery date for historical-policy applicability")
-    retrieval_eval = sub.add_parser("eval-retrieval", help="Evaluate retrieval locally without Gemini")
+    retrieval_eval = sub.add_parser("eval-retrieval", help="Measure retrieval using the configured embedding provider")
     retrieval_eval.add_argument("--input", choices=("original", "asr", "both"), default="both")
     retrieval_eval.add_argument("--k", type=int, default=12)
+    chat = sub.add_parser("chat", help="Interactive stateful text support; offline by default")
+    chat.add_argument("--live", action="store_true", help="Use Gemini for open policy answers; requires LLM_CALLS_ENABLED")
+    chat.add_argument("--debug", action="store_true", help="Show safe per-turn routing, validation and tool diagnostics")
+    conversations = sub.add_parser("eval-conversations", help="Replay all practice conversations in fresh sessions")
+    conversations.add_argument("--live", action="store_true", help="Use live grounded policy generation")
+    web = sub.add_parser("web", help="Serve the local web workspace")
+    web.add_argument("--host", choices=("127.0.0.1", "localhost"), default="127.0.0.1")
+    web.add_argument("--port", type=int, default=8000)
+    web.add_argument("--live", action="store_true", help="Use grounded policy generation; requires LLM_CALLS_ENABLED")
+    holdout = sub.add_parser('eval-holdout',help='Run the frozen authored holdout with grounded generation')
+    holdout.add_argument('--judge',action='store_true')
     args = parser.parse_args(argv)
     try:
         settings = Settings.load(env_file=args.env_file)
         dataset_dir = args.dataset_dir.resolve() if args.dataset_dir else settings.dataset_dir
         def local_index(*, build=False, download=False):
-            from .retrieval.embeddings import LocalEmbedder
+            from .retrieval.provider import create_embedder,index_directory
             from .retrieval.index import KnowledgeIndex
             if settings.runtime_dir.is_relative_to(dataset_dir):
                 raise ConfigurationError("RUNTIME_DIR must be outside the dataset directory")
-            embedder = LocalEmbedder(settings.runtime_dir / "models", allow_download=download)
-            path = settings.runtime_dir / "retrieval"
+            embedder = create_embedder(settings,download=download)
+            path = index_directory(settings)
             if build:
                 result = KnowledgeIndex.build(dataset_dir, embedder)
                 result.save(path)
                 return result
             return KnowledgeIndex.load(path, embedder, dataset_dir)
-        if args.command == "eval-inventory":
+        if args.command=='eval-holdout':
+            from .evaluation.holdout import evaluate
+            output=settings.runtime_dir/'holdout'/uuid4().hex
+            result={'output_dir':str(output),**evaluate(settings,local_index(),output,judge=args.judge,progress=lambda text:print(text,file=sys.stderr,flush=True))}
+        elif args.command in {"chat", "eval-conversations", "web"}:
+            from .conversation import ConversationAgent
+            from .tools.operations import SupportOperations
+            if settings.runtime_dir.is_relative_to(dataset_dir):
+                raise ConfigurationError("RUNTIME_DIR must be outside the dataset directory")
+            rag = None
+            if args.live:
+                from .rag import RagAgent
+                from .dataset import PublicKnowledge
+                rag = RagAgent(ChatCompletionClient(settings), local_index(), knowledge=PublicKnowledge.load(dataset_dir))
+            agent = ConversationAgent(SupportOperations(dataset_dir, settings.runtime_dir / "tools"), rag=rag)
+            if args.command == "web":
+                from .web import serve
+                from .speech.provider import GnaniSpeech
+                speech = GnaniSpeech(settings) if settings.gnani_api_key else None
+                serve(agent, host=args.host, port=args.port, speech=speech,history_path=settings.runtime_dir/'web_history.sqlite3')
+                return 0
+            if args.command == "chat":
+                from .chat import run_chat
+                run_chat(agent, debug=args.debug)
+                return 0
+            from .evaluation.conversations import replay_conversations
+            output = settings.runtime_dir / "conversations" / uuid4().hex
+            result = {"output_dir": str(output), **replay_conversations(dataset_dir, output, agent,
+                      mode="live" if args.live else "offline", secrets=(settings.llm_api_key, settings.gnani_api_key),
+                      progress=lambda message: print(message, file=sys.stderr, flush=True))}
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result["failed"] == 0 and result["scenarios_passing_routing"] == result["conversations"] else 2
+        elif args.command == "eval-inventory":
             result = practice_inventory(dataset_dir)
         elif args.command == "index":
             index = local_index(build=True, download=args.download_model)
             result = {"status": "built", "chunks": len(index.evidence), "embedding_model": index.embedder.name,
-                      "fingerprint": index.fingerprint, "gemini_calls": 0}
+                      "fingerprint": index.fingerprint, "embedding_requests":getattr(index.embedder,'network_requests',0),"generation_calls":0}
         elif args.command == "retrieve":
             from datetime import date
             from dataclasses import asdict
@@ -89,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
                                   delivered_on=date.fromisoformat(args.delivered_on) if args.delivered_on else None)
             result = {"query": found.query, "candidates": [{"evidence_id": h.evidence.evidence_id,
                        "similarity": h.similarity, "score": h.score} for h in found.candidates],
-                      "context": [asdict(e) for e in found.context], "gemini_calls": 0}
+                      "context": [asdict(e) for e in found.context], "embedding_requests":getattr(index.embedder,'network_requests',0),"generation_calls":0}
         elif args.command == "eval-retrieval":
             from .evaluation.retrieval import evaluate_retrieval
             index = local_index()
@@ -118,7 +161,8 @@ def main(argv: list[str] | None = None) -> int:
             agent = BaselineAgent(client)
             if args.stage == "rag":
                 from .rag import RagAgent
-                agent = RagAgent(client, local_index())
+                from .dataset import PublicKnowledge
+                agent = RagAgent(client, local_index(), knowledge=PublicKnowledge.load(dataset_dir))
             response = agent.respond(CustomerInput(args.message, uuid4().hex))
             result = response.to_dict((settings.llm_api_key, settings.gnani_api_key))
         elif args.command == "baseline":
