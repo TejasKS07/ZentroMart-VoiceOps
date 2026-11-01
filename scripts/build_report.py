@@ -23,20 +23,20 @@ assert history['status']=='finished'
 font='/usr/share/fonts/truetype/dejavu/DejaVuSans'
 pdfmetrics.registerFont(TTFont('Body',font+'.ttf'));pdfmetrics.registerFont(TTFont('BodyBold',font+'-Bold.ttf'))
 pdfmetrics.registerFontFamily('Body',normal='Body',bold='BodyBold')
-ink=colors.HexColor('#254f40');muted=colors.HexColor('#637168');light=colors.HexColor('#edf2e9')
+ink=colors.black;muted=colors.black;light=colors.HexColor('#edf2e9')
 styles={
  'title':ParagraphStyle('title',fontName='BodyBold',fontSize=23,leading=29,textColor=ink,spaceAfter=13),
  'sub':ParagraphStyle('sub',fontName='Body',fontSize=9,leading=14,textColor=muted,spaceAfter=12),
  'h':ParagraphStyle('h',fontName='BodyBold',fontSize=12,leading=17,textColor=ink,spaceBefore=11,spaceAfter=6),
- 'body':ParagraphStyle('body',fontName='Body',fontSize=9,leading=13,spaceAfter=8,textColor=colors.HexColor('#26372d')),
+ 'body':ParagraphStyle('body',fontName='Body',fontSize=9,leading=13,spaceAfter=8,textColor=colors.black),
  'small':ParagraphStyle('small',fontName='Body',fontSize=8,leading=11,textColor=muted,spaceAfter=7),
- 'cell':ParagraphStyle('cell',fontName='Body',fontSize=8,leading=11)}
+ 'cell':ParagraphStyle('cell',fontName='Body',fontSize=8,leading=11,textColor=colors.black)}
 story=[]
 def p(text,style='body'):story.append(Paragraph(text,styles[style]))
 def h(text):p(text,'h')
-def page(title,kicker):
+def page(title,_kicker):
  if story:story.append(PageBreak())
- p(kicker.upper(),'sub');p(title,'title')
+ p(title,'title')
 def table(rows,widths):
  t=Table([[Paragraph(escape(str(c)),styles['cell']) for c in row] for row in rows],colWidths=widths,hAlign='LEFT')
  t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),light),('VALIGN',(0,0),(-1,-1),'TOP'),
@@ -122,9 +122,6 @@ h('Scope and release limits')
 p('Digit/source checks do not prove semantic correctness. The final Gemma model has not received a full 52-question benchmark or human semantic review; selected smoke and literal checks cannot replace them. No organizer/unseen-test score is claimed. The brief permits synthetic data and optional own-voice tests; the user supplied no recordings. The original problem statement is unchanged. A public repository is requested by the PS, but the user explicitly chose a local release, so publishing is deferred. The local code, four-page report, short demo and ZIP are prepared.')
 p('References: Google hosted Gemma guide (ai.google.dev/gemma/docs/core/gemma_on_gemini_api), official API pricing (ai.google.dev/gemini-api/docs/pricing), supplied PS and Dataset contracts. Full source-to-requirement mapping: PS_COMPLETION.md.','small')
 
-def footer(c,doc):
- c.setStrokeColor(colors.HexColor('#d9e1d5'));c.line(48,44,547,44);c.setFont('Body',8);c.setFillColor(muted)
- c.drawString(48,30,'ZentroMart VoiceOps  /  1 November 2026');c.drawRightString(547,30,f'{doc.page} / 4')
 SimpleDocTemplate(str(ROOT/'report.pdf'),pagesize=(595,842),leftMargin=48,rightMargin=48,topMargin=42,bottomMargin=57,
- title='ZentroMart VoiceOps - PS implementation and evaluation',author='ZentroMart VoiceOps').build(story,onFirstPage=footer,onLaterPages=footer)
+ title='ZentroMart VoiceOps - PS implementation and evaluation',author='ZentroMart VoiceOps').build(story)
 print(ROOT/'report.pdf')

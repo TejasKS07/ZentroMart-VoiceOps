@@ -1,423 +1,159 @@
-# ZentroMart VoiceOps capstone
+# ZentroMart VoiceOps
 
-The project includes a prompt-only agent, multilingual RAG, identity-gated tools,
-deterministic policy calculations, stateful conversation, Gnani speech, an audio-folder
-runner, and a local dashboard with saved chat history.
-See [the action plan](PLAN_OF_ACTION.md).
+A multilingual customer-support application for ZentroMart's fictional retail
+operations. It answers from company documents, handles verified order lookups and
+human handovers, and supports text and Gnani speech through a local dashboard,
+console, and audio-folder runner.
 
-The current release uses **Gemma 4 31B (`gemma-4-31b-it`)** for language
-responses, through Google's native API. [Google's pricing table](https://ai.google.dev/gemini-api/docs/pricing#gemma-4)
-lists Gemma input/output as free. Gnani speech and uncached Gemini Embedding 1
-requests have separate account terms. No new embedding calls were made in the
-completion check.
+The configured language model is **Gemma 4 31B (`gemma-4-31b-it`)**. Retrieval uses
+**Gemini Embedding 1 (`gemini-embedding-001`, 768 dimensions)** with a local vector
+index. Gnani provides all speech recognition and synthesis.
 
-The source repository is [TejasKS07/ZentroMart-VoiceOps](https://github.com/TejasKS07/ZentroMart-VoiceOps).
-The updated release is kept locally on `codex/voiceops-completion` as requested;
-these latest changes have not been pushed. See [PS completion mapping](PS_COMPLETION.md).
+Repository: [TejasKS07/ZentroMart-VoiceOps](https://github.com/TejasKS07/ZentroMart-VoiceOps).
+The prepared release is local; its latest changes have not been pushed or deployed.
 
-```bash
-# After setup, with local keys and an existing index:
-LLM_CALLS_ENABLED=true python -m src web --live
-# Open http://localhost:8000
-```
+## Features
 
+- Document-grounded answers with original source chunks and section IDs.
+- English, Hindi, and Hinglish conversations, including follow-ups and topic changes.
+- Caller verification, isolated order context, and idempotent ticket creation.
+- Policy-derived return windows, refund timelines, business-day calculations, and amount estimates.
+- Text chat, audio recording/upload, spoken replies, diagnostics, and saved chat history.
+- Audio-folder processing with ordered conversation manifests and resumable output.
+- Preserved evaluation results, raw model traces, and explicit failure reporting.
 
-The current retrieval model is **Google Gemini Embedding 1
-(`gemini-embedding-001`, 768 dimensions)**. Vectors stay in the local index;
-embedding creation/search use the Google API. Earlier E5 retrieval measurements
-in the phase reports are historical and do not establish Gemini retrieval scores.
-Answer generation is opt-in through `LLM_CALLS_ENABLED=true`. The final evaluation
-uses the user-selected 234-request scope with shared pacing below 100 RPM.
+The same conversation controller serves the console, dashboard, and voice runner.
+Public questions use retrieval or structured policy lookups; private order details
+require verification. Audio passes through Gnani STT, the controller, and Gnani TTS.
 
-## Setup
+## Requirements
 
-Use Python 3.12 or newer (the pinned NumPy version requires 3.12). Dependencies were checked with
-Python 3.12. Keep the organizer dataset in `Dataset/`, or set `DATASET_DIR` to its
-extracted root. The dataset is an external input and must not be included in the
-submission ZIP.
+- Python 3.12 or newer; the pinned dependencies were checked with Python 3.12.
+- `ffmpeg` for decoding audio.
+- The supplied dataset, kept outside the submission package.
+- A Google API key for the configured hosted model and embeddings, plus a Gnani key
+  for speech. Other text Chat Completions-compatible providers are configurable.
+
+Provider account terms, quotas, and charges apply separately to language,
+embedding, and speech requests. Local text mode does not use a language-model API;
+Gnani speech and uncached Gemini embeddings still require their respective APIs.
+
+## Installation
+
+Run commands from the project directory:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-# Only for a new checkout; preserve an existing .env with your credentials.
+# Preserve an existing configuration and its credentials.
 test -f .env || cp .env.example .env
 ```
 
-With uv, the equivalent installation is:
+Alternatively, install with uv:
 
 ```bash
 uv venv .venv
 uv pip install --python .venv/bin/python -r requirements.txt
+source .venv/bin/activate
 ```
 
-Edit `.env` locally. Existing environment variables override the file. Relative
-configuration paths resolve against this project directory. Nothing imports API
-clients or makes network calls as a side effect of loading the application.
+Extract the dataset into `Dataset/`, or set `DATASET_DIR` in `.env` to its root.
+That directory must contain `kb/`, `data/`, `practice/`, the validator, and supplied
+tools. Add credentials only to local `.env`; keep the example's key fields blank.
 
-| Setting | Purpose |
-| --- | --- |
-| `DATASET_DIR` | Dataset root containing `kb/`, `data/`, `practice/`, and supplied validator/tools |
-| `RUNTIME_DIR` | Generated outputs, outside the dataset; defaults to `runtime/` |
-| `LLM_ENDPOINT` | Complete HTTPS text Chat Completions URL, including `/chat/completions`; localhost HTTP is allowed |
-| `LLM_MODEL` | Exact model ID from your chosen provider; no default model is assumed |
-| `LLM_API_KEY` | Provider bearer key; may be blank for a local unauthenticated endpoint |
-| `GNANI_API_KEY` | Participant's own Gnani key |
-| `GNANI_TTS_MODEL` / `GNANI_TTS_VOICE` | Explicit speech settings; initial candidates `timbre-v2.5` / `Kaveri` |
-| `GNANI_LANGUAGE` | Initial speech locale, `en-IN` |
-| `API_TIMEOUT_SECONDS` | Per-request timeout, default 45 seconds |
-| `LLM_TEMPERATURE` | Optional 0–2; blank leaves the provider default |
-| `LLM_REASONING_EFFORT` | Optional provider-supported effort; blank leaves its default |
-| `LLM_CALLS_ENABLED` | Controls answer generation/grading; independent of embedding calls |
-| `EMBEDDING_PROVIDER` | `gemini` by default; `local` explicitly selects the earlier E5 implementation |
-| `EMBEDDING_API_KEY` | Optional dedicated Google key; otherwise uses the Google `LLM_API_KEY` |
-| `GNANI_STT_MODEL` | Explicit STT model, `prisma-v3.0`; clips are capped at 30 seconds |
-
-All policy calculations use **20 October 2026**; the application does not take
-"today" from the computer clock. Real timestamps may still identify test runs.
-
-`.env` is ignored and contains real credentials locally; `.env.example` must keep
-key values empty. To select another environment file explicitly, place the global
-option before the command: `python -m src --env-file /path/to/settings.env check`.
-
-## Offline checks
-
-Run commands from the project directory using the activated virtual environment:
+Validate the configuration and dataset, then build the retrieval index:
 
 ```bash
 python -m src check --validate
-python -m src eval-inventory
-python -m unittest discover -s tests -v
-```
-
-An external dataset can be selected with:
-
-```bash
-python -m src --dataset-dir /path/to/extracted/dataset check --validate
-```
-
-`check --validate` runs the organizer's full validator, then checks data loading,
-primary keys, public document parsing, practice input structure, and dependency
-versions. It prints counts/configuration readiness without private records or
-keys. `offline_passed` does not establish API connectivity. `eval-inventory`
-reports practice counts only; it does not call an agent or invent scores.
-
-## Live connectivity checks
-
-Configure credentials, the model/endpoint, and `LLM_CALLS_ENABLED=true` first. These commands make real API
-calls and may incur provider charges:
-
-```bash
-python -m src smoke --component llm
-python -m src smoke --component gnani
-python -m src smoke --component gnani --audio /path/to/your-own-recording.wav
-```
-
-The LLM check sends a short neutral text prompt to the configured endpoint. The
-Gnani check synthesizes a short test sentence into a valid WAV, then transcribes
-the supplied recording, or the synthesized WAV if no recording is specified.
-Loopback verifies connectivity only; it is not real-caller ASR evaluation.
-Use your own short recording for a meaningful microphone check.
-
-Generated smoke audio and a `checks.json` report are saved in `runtime/smoke/<unique-run>/`. Transcripts and
-provider error bodies are not printed or saved. Missing settings produce
-`pending` and exit code 2; failed checks also exit 2 with status `failed`. A passed
-check requires a successful real response. The offline tests use doubles and do
-not count as live checks.
-
-The Gnani SDK is pinned to `gnani-vachana==0.9.0`; constructor and method signatures
-were inspected locally. Model/voice/account availability still requires the live
-check. No non-Gnani speech service is used.
-
-## Phase 1: prompt-only agent and baseline
-
-Ask one question in a fresh support conversation:
-
-```bash
-python -m src ask "How long does a refund take?"
-```
-
-The system prompt establishes the support role, AI disclosure, language matching,
-limits and output contract. It contains no company policy facts or example
-answers. The agent receives only that prompt and the customer's message: no KB,
-catalog rows, order details, tools, labels or conversation history. It can
-acknowledge missing information; a low baseline score is valid evidence for RAG.
-
-Baseline generation and optional grading use the configured external LLM and
-therefore send synthetic practice content to that provider. Generation sends only
-questions; grading additionally sends the reference answer, required/forbidden
-facts, expected language and candidate reply. It never sends the private customer,
-order or support-log tables. The user has authorized these calls for the final
-completed project. The final selected scope and its request audit are documented below.
-
-```bash
-# Two-question integration check; does not count as a full baseline.
-python -m src baseline --limit 2 --judge
-
-# Full 52-question baseline, followed by separate semantic grading.
-python -m src baseline --judge
-
-# Original and ASR-like text as two independent experiments.
-python -m src baseline --input both --judge
-
-# Grade a completed generation run without regenerating its answers.
-python -m src grade runtime/baseline/RUN_ID
-```
-
-Each run creates a unique `runtime/baseline/RUN_ID/` directory containing:
-
-- `manifest.json`: prompt text/version/hash, requested model, explicit generation
-  parameters, source and practice-data hashes, runtime/dependency versions,
-  selected question IDs and whether this is a full 52-question run.
-- `results.jsonl`: actual unedited replies, raw model text, resolved model,
-  finish reason, token usage, latency, decision match and evidence metrics.
-- `summary.json`: completion/failure counts and decision match rate. This rate
-  is not factual answer accuracy.
-- `judgements.jsonl`, `judge_manifest.json`, `grading_summary.json` when grading
-  is requested. Semantic checks accept paraphrases and equivalent multilingual
-  facts. A pass requires an accepted decision, required facts, no forbidden
-  claims, correct reply language and first-turn AI disclosure. Model-judged
-  scores are provisional and need human spot-checks.
-- `report.md`: readable results and the comparison procedure for Step 2.
-
-The entire answering pass is saved before grading begins, keeping reference
-answers out of generation. Malformed/truncated model responses count as contract
-failures and preserve their original output; they are not rewritten or repeatedly
-regenerated until acceptable. Provider outages stay distinct from factual errors.
-Transient network/HTTP failures have at most three attempts; persistent failures
-halt a run after three affected questions. Authentication/configuration HTTP
-errors halt immediately. Partial results remain available after interruption.
-Grading refuses to overwrite an existing judgment file.
-
-Keep the same model, generation parameters, case selection, input variant and
-judge procedure when comparing Step 2. Provider defaults apply for unspecified
-generation parameters; the manifest records this limitation and per-response
-model IDs. AI disclosure and factual correctness are measured, not inserted into
-or corrected in the model's saved reply.
-
-## Phases 2 and 3: local retrieval and verified tools
-
-`LLM_CALLS_ENABLED=false` disables answer generation and grading. Gemini embeddings
-use the network independently; select `EMBEDDING_PROVIDER=local` explicitly for
-cached E5 inference. Build and inspect retrieval with:
-
-```bash
-# Build Gemini Embedding 1 vectors for public KB/catalog chunks.
+# Uses the embedding API unless all document vectors are cached.
 python -m src index
-
-# Optional legacy E5 mode, selected explicitly:
-EMBEDDING_PROVIDER=local python -m src index --download-model
-
-# Gemini reuses cached vectors; uncached queries use the embedding API.
-python -m src index
-python -m src retrieve "UPI refund ka time kitna hai?"
-python -m src retrieve "electronics return window" --delivered-on 2026-07-31
-python -m src eval-retrieval --input both --k 12
 ```
 
-The optional CPU embedding model is quantized `intfloat/multilingual-e5-small`, loaded
-through FastEmbed/ONNX Runtime with the required query/passage prefixes. The
-public model/tokenizer download is approximately 140 MB; cached inference stays
-local. Index metadata checks source, weight and tokenizer fingerprints and
-rejects stale indexes. The index has 154 chunks: 84 KB sections and 70 catalog
-rows. Private orders, customers, support logs and practice answer keys are excluded.
-
-Search combines semantic similarity, lexical overlap and document authority.
-It resolves public product names/SKUs, labels ambiguous spoken SKU candidates,
-and retains current successor rules when a historical delivery date makes an
-older policy applicable. The context includes top candidates, document neighbors,
-explicit cross-references, KB rules and agent guides. Candidates and enriched
-context are reported separately. These contextual additions improve coverage at
-the cost of extra input tokens during the final live run.
-
-`RagAgent` requests a five-field structured reply and records its original used
-chunks. Source IDs and language are constrained by the request schema. The actual
-reply is checked for unsupported digit-form quantities and contradictory calculated
-dates; explicit abstention is supported. Reply-level provenance replaces duplicated
-model claim annotations. For an unambiguous warranty product, the agent may append
-the catalog duration automatically and rejects a contradictory explicit duration.
-Raw model text remains separate and unchanged. These checks do not prove semantic
-correctness; the saved evaluations measure quality separately.
-
-The Phase 3 API is `SupportOperations(dataset_dir, runtime_dir)`:
-
-```python
-from pathlib import Path
-from src.tools.operations import SupportOperations
-
-ops = SupportOperations(Path("Dataset"), Path("runtime/tools"))
-session = "current-call"
-pending = ops.gateway.begin(session, order_id)  # customer-provided order ID
-verified = ops.gateway.verify(session, caller_proof)  # one caller-provided proof
-if verified.verified:
-    result = ops.refund_status(session, "return")
-```
-
-The gateway uses the supplied `lookup_order` and `create_ticket` implementations
-without changing their source. It permits two identity attempts, keeps attempts
-when switching back to an order, scopes verified facts by session/order, and
-removes expected proof/contact fields before model context. Backend failures are
-not charged as wrong identity attempts. Use `gateway.sanitize(session, value)` at
-persistence boundaries; session proof values stay in private memory for redaction.
-
-`gateway.handover(session, issue_key=..., issue=..., intent=..., checked=...,
-reason=...)` builds a sanitized summary and returns a tool event. Claim handover
-success only for `status="succeeded"` and `details["created"] is True`. A local
-SQLite idempotency ledger suppresses repeated successful tickets across restarts.
-Generated tickets and the ledger are under the runtime directory, never Dataset.
-
-Public product/pincode lookups include source rows. Verified return/refund calls
-use selected item lines and quantities. `PolicyCalculator` reads current category
-windows, historic/festive exceptions, fees, settlement ranges and escalation
-thresholds from the actual KB; holidays come from the CSV. It distinguishes
-calendar days, Mon–Sat business days, refund initiation and settlement. Date-only
-wallet initiation cannot establish an exact two-hour deadline. A missing grocery
-slot or current time requires clarification. Quotes use Decimal and half-up rupee
-rounding, coupon allocation/clawback, fee waivers and whole-order fee rules.
-Canonical quote reasons are `change_of_mind`, `damaged`, `defective`, and `wrong`;
-dataset labels such as `quality` must not be blindly treated as approved defects.
-Quotes and window checks are estimates/conditions, never approval or execution.
-
-Conversation intent extraction and automatic tool routing are now implemented in
-Phase 4; the Phase 3 services also remain callable independently.
-See [the implementation report](PHASE_2_3_REPORT.md) for measured results.
-
-For a new billable run, enable LLM calls. The same runner supports both stages:
+The dataset validator and readiness checks do not call the model or establish API
+connectivity. An external dataset can also be selected per command:
 
 ```bash
-python -m src baseline --stage baseline --input both --judge
-python -m src baseline --stage rag --input both --judge
-python -m src ask --stage rag "How fast is a wallet refund?"
+python -m src --dataset-dir /path/to/dataset check --validate
 ```
 
-## Phase 4: stateful conversation
+## Dashboard
+
+Start the live workspace:
 
 ```bash
-# Local interactive text chat; /quit or EOF ends the session.
-python -m src chat
+LLM_CALLS_ENABLED=true python -m src web --live
+```
 
-# Add per-turn validation, routing and tool feedback.
+Open [http://localhost:8000](http://localhost:8000). Stop the server with Ctrl+C.
+For local rules and tools without language-model generation, omit `--live`:
+
+```bash
+python -m src web
+# Optional alternate port:
+python -m src web --port 8080
+```
+
+The responsive dashboard provides a message composer, suggested questions,
+record/upload controls, reply playback, sources, and conversation details. Status
+shows missing information, verification, tool outcomes, and the configured model.
+Microphone permission is requested only when recording starts.
+
+Recent chats can be reopened or deleted. Starting a new conversation clears active
+verification while preserving the old transcript. History is stored in the local,
+browser-scoped `runtime/web_history.sqlite3` database. Verified identity is not
+persisted, so private order access requires verification again after a restart.
+
+The server binds to loopback and serves only fixed frontend assets and same-origin
+endpoints. It uses opaque HttpOnly/SameSite cookies, rejects cross-origin requests,
+and keeps private dataset files and raw model output out of browser responses.
+Deployment requires a suitable production server, HTTPS, authentication, and
+hosting-specific session storage.
+
+## Console and retrieval
+
+```bash
+# Stateful local support with per-turn diagnostics:
 python -m src chat --debug
 
-# All 23 practice conversations / 96 turns, with no Gemini calls.
-python -m src eval-conversations
+# Stateful support with document-grounded language-model generation:
+LLM_CALLS_ENABLED=true python -m src chat --live
 
-# With LLM_CALLS_ENABLED=true:
-python -m src chat --live
-python -m src eval-conversations --live
+# Independent prompt-only or grounded questions:
+LLM_CALLS_ENABLED=true python -m src ask "How long does a refund take?"
+LLM_CALLS_ENABLED=true python -m src ask --stage rag "How fast is a wallet refund?"
+
+# Inspect retrieval without generating an answer:
+python -m src retrieve "UPI refund ka time kitna hai?"
+python -m src retrieve "electronics return window" --delivered-on 2026-07-31
 ```
 
-`ConversationAgent(SupportOperations(...), rag=optional_rag_agent)` accepts
-`CustomerInput(text, session_id)` and returns the shared `AgentResponse`. The
-application must use a fresh session ID for each customer conversation. The
-controller holds session state in memory and `clear_session` clears its identity
-state too. It handles identity prompts/retries, language changes, topic and order
-switches, return/refund and delivery follow-ups, one-question clarification,
-policy-grounded calculations and all documented escalation triggers. New orders
-need their own verification; switching to public policy preserves the current
-order's verification but discards unrelated issue context. No order mutation tool
-is invented, and a ticket is confirmed only after successful creation.
+Console commands include `/help`, `/status`, `/reset`, and `/quit`. Debug output
+shows routing, missing fields, identity attempts, tool status, and evidence IDs;
+it excludes proof values and private records. Malformed order IDs receive specific
+feedback before lookup. Ambiguous requests receive one clarification question.
 
-Offline mode uses deterministic operational replies and a limited policy fallback;
-open-policy fallback may show original English source extracts. `--live` adds
-RAG for open policy questions using sanitized relevant context. It respects the
-existing generation setting. Gemini was not called during Phase 4 development;
-the final comparison is a separate frozen experiment.
+## Audio-folder processing
 
-Chat explains incomplete input with concrete examples instead of repeating a
-generic prompt. Order IDs must have exactly 8 digits; malformed IDs are rejected
-before lookup, and invalid verification formats do not spend an identity retry.
-"New order" asks whether you mean placing an order or checking an existing order;
-placing orders is explicitly unavailable in this support chat.
-
-Use `/help` for examples, `/status` for the current mode and last result, `/reset`
-for a fresh conversation, and `/quit` to exit. `--debug` prints a safe diagnostic
-record after each turn: result code, decision status, recognized intent, missing
-field, identity-attempt count, tool names/statuses, evidence IDs and whether an LLM
-was used. It excludes customer input, proof values and private order records.
-Offline mode clearly identifies Gemini as disabled. Live generation failures show
-a failure code and keep the chat open for retry; they do not become an answer.
-The same per-turn diagnostics are included in serialized conversation responses.
-
-`eval-conversations` creates `runtime/conversations/RUN_ID/manifest.json`,
-`results.jsonl`, `summary.json` and `report.md`. Sessions are isolated and turns
-ordered; only customer messages reach the controller. Evaluator metadata stays
-outside the agent, and proof-bearing messages/expected proof arguments are not
-saved. The runner checks decisions and tool names/counts and reports evidence
-metrics; these checks are not semantic answer accuracy. Partial outputs survive
-interruptions, and persistent live service failures halt the run.
-
-The saved local replay completed all 96 turns with matching expected decisions
-and tool names/counts, across all 23 scenarios. The current 137-test suite includes
-session/order isolation, language switches, privacy, clarification, escalation,
-ticket failure and replay regressions. See [the Phase 4 report](PHASE_4_REPORT.md)
-for artifacts and limitations.
-
-## Local website
-
-Start the browser workspace from the project directory:
-
-```bash
-.venv/bin/python -m src web
-# Optional alternate local port:
-.venv/bin/python -m src web --port 8080
-```
-
-Open [http://localhost:8000](http://localhost:8000). The server stays running until
-Ctrl+C. The website uses the same `ConversationAgent` as the text console, with a
-responsive solid-color theme, suggested questions, a message composer, source
-references and a conversation-details panel. It shows invalid input, verification,
-tool success/failure and whether generation was used. New conversation clears the
-previous active verification while preserving its saved transcript. Recent chats
-appear in the sidebar and can be reopened or deleted. Reload restores saved chat
-history; after server restart the caller must verify again before private lookups.
-
-The default answer mode is offline. `LLM_CALLS_ENABLED=true python -m src web --live`
-enables RAG policy generation. Record or upload up to 30 seconds of English, Hindi,
-or Hinglish speech; Gnani transcribes and synthesizes the reply. The browser uses
-an AudioWorklet to capture WAV audio and provides reply playback. Microphone
-permission is requested only when Record is clicked. No website is deployed.
-
-The frontend is plain HTML/CSS/JavaScript in `web/`; no Node installation, frontend
-build, CDN, external fonts or extra Python dependencies are required. `src/web.py`
-serves assets and same-origin JSON endpoints on loopback only. It issues opaque,
-HttpOnly/SameSite cookies, expires idle sessions after one hour, sanitizes displayed
-proofs and response traces, and rejects cross-origin requests. Raw model output
-and private dataset files are not served. Request IDs make message retries
-idempotent, including failed identity checks. Sanitized chat history and voice
-replies are stored in `runtime/web_history.sqlite3`, scoped to the browser's opaque
-cookie. Proof values and verified identity state are not persisted. Treat this
-runtime file as private local data and exclude it from releases.
-
-This server is for local use. A later deployment can retain the frontend and
-controller while adding an appropriate production server, HTTPS, authentication
-and session storage for its hosting environment.
-
-```bash
-# Includes real loopback HTTP integration tests.
-.venv/bin/python -m unittest discover -s tests -q
-```
-
-## Speech and audio-folder runner
-
-Install `ffmpeg` alongside Python. Fill in `GNANI_API_KEY`, the LLM settings and
-the embedding key in `.env`, then build the index with `python -m src index`.
-The required interface is:
+The submission interface accepts an input folder and saves each support reply:
 
 ```bash
 LLM_CALLS_ENABLED=true python run.py --input-dir ./test_audio --output-dir ./outputs/run1 --dataset-dir ./Dataset
-# Deterministic local text replies; speech still uses the Gnani API:
+```
+
+To use deterministic local text replies while retaining Gnani STT/TTS:
+
+```bash
 python run.py --input-dir ./test_audio --output-dir ./outputs/local1 --offline
 ```
 
-Supported audio: WAV, MP3, FLAC, OGG, M4A, AAC and WebM, up to 20 MB and 30 seconds
-per clip. The runner normalizes audio to mono 16 kHz PCM. `--language` accepts
-`en-IN`, `hi-IN`, `hi-en` or `indic-auto`. Gnani `prisma-v3.0` performs STT and
-`timbre-v2.5` / `Kaveri` performs TTS. Hindi/English digit words are normalized
-conservatively; ambiguous identifiers trigger a repeat request.
+Supported formats are WAV, MP3, FLAC, OGG, M4A, AAC, and WebM, up to **20 MB and
+30 seconds per clip**. Audio is normalized to mono 16 kHz PCM. `--language` accepts
+`en-IN`, `hi-IN`, `hi-en`, or `indic-auto`. Spoken identifiers are normalized
+conservatively; ambiguous digits trigger a repeat request.
 
-Files are independent conversations unless `--manifest conversation.json` is
-provided. A manifest is an ordered JSON array, for example:
+Files are independent conversations by default. Use `--manifest conversation.json`
+for ordered turns:
 
 ```json
 [
@@ -426,173 +162,202 @@ provided. A manifest is an ordered JSON array, for example:
 ]
 ```
 
-Paths must stay inside the input directory and turns must start at one without
-gaps. Each `clip-0001/` output saves `reply.txt`, playable `reply.wav`, original
-used chunks in `evidence.json`, and a sanitized `result.json` with transcript,
-decision, tool events and stage timings. `manifest.json` fingerprints inputs,
-source and configuration; `summary.json` distinguishes completed, needs-repeat
-and failed clips. Exit 0 means every clip completed; exit 2 means partial voice
-completion; exit 1 means a configuration/input failure.
+Manifest paths must stay inside the input directory. Turns must start at one and
+be consecutive. Input and output directories must be separate; output must not
+be inside the dataset.
 
-Use the same command with `--resume` to reuse completed artifacts. TTS-only
-failures retry synthesis from a saved text checkpoint. Partial conversations may
-replay preceding audio to reconstruct state; ticket creation remains idempotent.
-Changed source, configuration or inputs refuse resume. Silent/corrupt audio gets
-a repeat prompt and is counted as `needs_repeat`, never a completed support turn.
+Each `clip-0001/` directory contains the available artifacts:
 
-Live checks used synthetic Gnani speech in English, Hindi and Hinglish. The mixed
-batch completed all three valid clips and correctly requested repeats for silence
-and corruption. A clean installation also completed one English clip. Human
-recordings and microphone recognition have not been evaluated. The short demo is
-playback of real saved agent outputs with synthetic caller speech.
+| File | Contents |
+| --- | --- |
+| `reply.txt` | Actual assembled agent reply |
+| `reply.wav` | Gnani-generated speech |
+| `evidence.json` | Original used chunks and their identifiers |
+| `result.json` | Sanitized transcript, decision, diagnostics, tool events, timings, and error status |
+| `text_checkpoint.json` | Saved text state for synthesis recovery |
 
-## Embedding requests and final evaluation scope
+The output root contains an input/configuration fingerprint manifest and a summary.
+Exit code **0** means every clip completed, **2** means partial voice completion,
+and **1** means a configuration or input failure. Silence, corruption, and audible
+failure explanations are not counted as successful support answers.
 
-Gemini Embedding 1 uses 100-item synchronous batches. The 154 public KB/catalog
-chunks need two successful document-embedding requests on an empty cache.
-Vectors are normalized, versioned and cached persistently. Raw query text and keys
-are not written into the cache. An API failure never silently switches models.
-If the second batch is rate limited, rerunning `index` reuses the first batch.
-`LLM_CALLS_ENABLED=false` blocks answer generation, not the requested embedding API.
+Repeat the same command with `--resume` to reuse completed output. Synthesis-only
+failures retry saved text. Partial conversations may replay earlier audio to
+reconstruct state; ticket creation remains idempotent. Changed inputs, source,
+or configuration refuse resume.
 
-Evaluation prefetches 52 query vectors in one embedding request, then reuses those
-vectors for the per-question retrievals. Automatic grading groups up to ten saved
-answers per request and preserves its raw batch output. It remains a provisional
-model judgement rather than human-reviewed or organizer accuracy.
+## Configuration
 
-With the index already built, the available scopes are:
+Environment variables override `.env`. Relative paths resolve against the project
+root. To use another environment file, place the global option before the command:
+`python -m src --env-file /path/to/settings.env check`.
 
-| Scope | Answer calls | Query-embedding calls | Grading calls | New HTTP calls |
-| --- | ---: | ---: | ---: | ---: |
-| Smoke: 5 baseline + 5 RAG | 10 | 1 | 0 | 11 |
-| Required: 52 baseline + 52 RAG | 104 | 1 | 0 | 105 |
-| Required + batched grading | 104 | 1 | 12 | 117 |
-| Original + ASR, with batched grading | 208 | 2 | 24 | 234 |
+| Setting | Purpose / example configuration |
+| --- | --- |
+| `DATASET_DIR` | Supplied dataset root; `./Dataset` |
+| `RUNTIME_DIR` | Generated state outside the dataset; `./runtime` |
+| `LLM_MODEL` | Hosted model ID; `gemma-4-31b-it` |
+| `LLM_ENDPOINT` | Text Chat Completions URL; Google-hosted Gemma 4 is routed to its native `generateContent` API |
+| `LLM_API_KEY` | Language-model provider key; may be blank for a local unauthenticated endpoint |
+| `LLM_CALLS_ENABLED` | Enables generation/grading; `false` by default |
+| `LLM_TEMPERATURE` | `0.2` in the example; blank uses the provider default |
+| `LLM_REASONING_EFFORT` | `minimal` in the example; hosted Gemma 4 also supports `high` |
+| `API_TIMEOUT_SECONDS` | `90` in the example |
+| `EMBEDDING_PROVIDER` | `gemini` by default; `local` selects multilingual E5 |
+| `EMBEDDING_API_KEY` | Dedicated Google embedding key, or the Google `LLM_API_KEY` |
+| `GNANI_API_KEY` | Gnani account key |
+| `GNANI_STT_MODEL` | `prisma-v3.0` |
+| `GNANI_TTS_MODEL` / `GNANI_TTS_VOICE` | `timbre-v2.5` / `Kaveri` |
+| `GNANI_LANGUAGE` | Initial speech locale; `en-IN` |
 
-These are planned successful HTTP requests with a cold query cache; retries can
-add calls. Batched texts and token counts are separate quantities. The user selected
-the 234-call scope. A shared rolling-window limiter allows 90 quota units in 60
-seconds across both workers and all retries; each embedded text counts as one unit
-conservatively. HTTP 429 pauses both workers and honors server retry delays.
-Provider token/day quotas can still cause rate limits.
-The implementation is in `scripts/final_evaluation.py` (`--limit 5`, `--judge`,
-`--asr`), and never enables the optional variants by default.
+`LLM_CALLS_ENABLED` does not disable speech or embedding requests. Gemini vectors
+are normalized and cached by content hash. Uncached queries use the embedding API;
+keys and plaintext queries are not stored in the vector cache. Failures never
+silently switch embedding models.
 
-## Contracts and boundaries
+For local CPU embeddings, set `EMBEDDING_PROVIDER=local` in `.env` and build the
+matching index with `python -m src index --download-model`. This explicitly selects
+quantized `intfloat/multilingual-e5-small`; its model/tokenizer download is about
+140 MB. Keep the same provider configured for indexing and querying.
 
-- `src/config.py`: environment settings and the fixed dataset reference date.
-- `src/dataset.py`: UTF-8 CSV reading preserves every value as text, including
-  leading zeroes and empty cells. Public knowledge contains catalog, pincodes,
-  holidays, and policy documents; no customer/order/support-log tables or practice
-  answers are exposed in that object. Inventory reads private tables only for
-  counts/key checks. Private order access uses the supplied verified tool through
-  the Phase 3 gateway.
-- `src/schemas.py`: validated decisions, used evidence with original chunk text
-  and metadata, candidate retrieval IDs, language, timings, and tool-event output.
-  Used evidence and retrieved candidates are distinct.
-- `src/redaction.py`: masks sensitive keys and explicitly supplied secret values,
-  including grouped/native-script numeric proof. Tool events persist only a small
-  allowlist. The verification controller must supply known proof/API-key
-  values when serializing; this function does not infer every secret from prose.
-- `src/evaluation/`: labels remain evaluator-only. The agent callback receives
-  `CustomerInput(text, session_id)`, without reference answers or gold evidence.
-  The question runner saves actual responses, decision matches, and per-question
-  evidence metrics; optional separate semantic grading scores factual checks.
-  Conversation cases replay in order through the Phase 4 controller.
+All policy calculations use the dataset reference date, **20 October 2026**,
+independently of the host clock.
 
-`run_questions(cases, respond, output_dir)` takes the real Phase 1 agent callback.
-It creates a new output directory, refuses to overwrite past results, and records
-individual failures while continuing the run. Keep experiment metadata/model
-settings with each frozen baseline/RAG comparison.
+## Grounding and privacy
 
-## Current completion status
+Only public KB and catalog content is embedded: 84 sections and 70 product rows.
+Search combines semantic similarity, lexical matching, and document authority.
+Context includes relevant neighbors, cross-references, and shared escalation rules.
+Historical policy exceptions are applied only when authorized by the current policy.
 
-- Offline foundation and supplied dataset validation: complete.
-- Automated foundation/integration-contract checks: available in `tests/`.
-- Phase 1 agent and reproducible evaluation code: implemented and tested locally.
-- Live smoke reports: see `runtime/smoke/*/checks.json` for timestamped results.
-- Local multilingual retrieval, source provenance and Phase 3 services: implemented.
-- Phase 4 conversation controller and ordered replay: implemented.
-- 137 local tests pass, including speech, history, shared RPM pacing, batched embeddings, grading contracts and HTTP integration tests.
-- All 23 practice conversations / 96 turns pass decision and tool-name/count checks; semantic accuracy remains unscored.
-- Gnani speech, batch processing, dashboard playback and saved chat history are implemented.
-- Fresh dependency installation and execution with an external dataset passed.
-- Final Gemini generation/grading uses the selected 234-call scope. Saved results
-  and limitations accompany the release; model grades remain provisional.
+The agent validates the actual reply and cited section IDs, checks digit-form
+quantities and calculated dates, and supports explicit abstention. An unambiguous
+catalog warranty duration can supplement a reply automatically. Raw model output
+is preserved separately; these checks do not prove semantic correctness.
 
-The configured hosted model is now `gemma-4-31b-it`, with minimal thinking,
-temperature 0.2 and a 90-second timeout in the example configuration. The adapter
-uses Google's native `generateContent` API for hosted Gemma 4 and excludes thought
-parts from customer-facing output. The older full benchmark used
-`gemini-3.5-flash-lite`; its scores are historical. Keep model/settings fixed in
-any new baseline/RAG comparison. Keys remain only in ignored local `.env`.
+Private order access uses the supplied `lookup_order` tool and caller-provided
+proof. Order IDs must contain eight digits. Verification permits two attempts,
+is scoped to the session/order, and cannot be restored from chat history. Proofs
+are redacted before model context and persistence. Tickets are confirmed only
+when the supplied `create_ticket` tool succeeds.
 
-## Integration references
+Policy calculations distinguish calendar days, Monday-Saturday business days,
+holidays, refund initiation, and settlement. Monetary estimates use Decimal and
+half-up rupee rounding. Calculations and eligibility checks do not execute refunds,
+cancellations, or pickup bookings; those actions are unavailable through these tools.
 
-- [Gemini embedding guide](https://ai.google.dev/gemini-api/docs/embeddings) and [embedding API](https://ai.google.dev/api/embeddings) for `gemini-embedding-001`, batching, task types and dimensionality.
-- [Official OpenAI Chat Completions HTTP contract](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create) for `model`, `messages`, and text response shape. This adapter supports that contract; other provider protocols need a separate adapter.
-- [Official Gnani SDK](https://github.com/Gnani-AI-Mintlify/Gnani-Vachana/blob/main/README.md) and [published package](https://pypi.org/project/gnani-vachana/).
-- [python-dotenv](https://pypi.org/project/python-dotenv/) for local `.env` support.
+## Testing and evaluation
 
-## Historical full results and local deliverables
+Local checks make no model calls:
+
+```bash
+python -m src check --validate
+python -m unittest discover -s tests -q
+python -m src eval-conversations
+```
+
+Regression fixtures expect the supplied dataset at `Dataset/`; the application
+also supports an external dataset through configuration or `--dataset-dir`.
+
+Connectivity checks make real provider requests:
+
+```bash
+LLM_CALLS_ENABLED=true python -m src smoke --component llm
+python -m src smoke --component gnani
+python -m src smoke --component gnani --audio /path/to/own-recording.wav
+```
+
+Compare prompt-only and grounded answers using the same model, settings, cases,
+input variant, and grading procedure:
+
+```bash
+LLM_CALLS_ENABLED=true python -m src baseline --stage baseline --input both --judge
+LLM_CALLS_ENABLED=true python -m src baseline --stage rag --input both --judge
+LLM_CALLS_ENABLED=true python -m src grade runtime/baseline/RUN_ID
+python -m src eval-retrieval --input both --k 12
+```
+
+Generation receives customer inputs and permitted context, never reference answers
+or gold labels. Grading occurs after answers are saved. Runs retain manifests,
+source/data hashes, raw output, usage, latency, decisions, used evidence, grades,
+and failures. Invalid output is not manually repaired to improve a score. Transport
+retries are bounded, and grading refuses to overwrite existing judgments.
+
+The full-comparison script `scripts/final_evaluation.py` supports shared pacing
+at 90 weighted quota units per rolling minute, below the configured 100 RPM limit.
+It counts retries and embedding items conservatively and honors rate-limit cooldowns.
+Token/day quotas can still produce limits. New evaluation runs make API calls;
+inspect the shipped evidence when no rerun is needed. The archived capped check
+is a single-run experiment with a marker and hard attempt budget.
+
+### Recorded results and limits
+
+The historical full comparison used Gemini 3.5 Flash-Lite, not the current Gemma
+configuration. All failures remain in the denominator:
 
 | Input | Prompt-only provisional pass | RAG provisional pass |
 | --- | ---: | ---: |
 | Original text | 7/52 (13.5%) | 24/52 (46.2%) |
 | ASR-like text | 8/52 (15.4%) | 30/52 (57.7%) |
 
-These are the older Gemini 3.5 Flash-Lite benchmark scores, not current Gemma scores.
-The answer-quality target was not met. RAG had 11 original and 10 ASR contract
-failures; all remain in the denominator. These are provisional model grades,
-without human review. Gemini candidate recall@12 was 92.2% and enriched-context
-recall 100% for both variants. Routing checks are a separate measurement.
+The internal answer-quality target was not met. Model grades are provisional,
+without human review, and are not organizer or unseen-test scores.
 
-The selected evaluation completed 234 successful HTTP requests in 248 attempts,
-including 14 rate-limit retries. The independently verified peak was 70 quota
-units per rolling minute, under the shared 90-unit cap and user limit of 100 RPM.
-No extra holdout or conversation-semantic calls were made. Post-run analysis used
-cached vectors and made zero provider calls. Inspect the frozen evidence without
-rerunning the billable experiment in `sample_outputs/evaluation/` and
-`sample_outputs/analysis/`.
+The final source passed **137 tests** and all **96 conversation decision/tool
+checks** across 23 scenarios. Cached retrieval measured **92.2% candidate recall@12**
+and **100% enriched-context recall** for both variants. Routing and retrieval
+coverage are separate from factual accuracy.
 
-See [the final phase report](PHASE_5_7_REPORT.md), [four-page report](report.pdf),
-[synthetic playback demo](demo.mp4), and [actual sample outputs](sample_outputs/).
-`zentromart_voiceops.zip` is the local submission package. Public repository
-synchronization and deployment have not been performed. Human-recorded speech,
-human semantic review and unseen-test performance remain unverified.
+The smaller Gemma 4 26B check retained contract/service failures and an unresolved
+grade. The final Gemma 4 31B configuration completed three live contract smoke
+cases; a separate zero-call replay through catalog completion passed their required
+literal facts. There is no full Gemma accuracy benchmark or human semantic review.
 
-The user chose to keep this release local. The completed source is committed on
-`codex/voiceops-completion`; nothing was pushed to the public repository.
+Synthetic English, Hindi, and Hinglish speech checks passed. A mixed batch completed
+three valid clips and requested repeats for silence/corruption. Human recordings
+and microphone ASR accuracy remain unmeasured. The demo is labelled playback of
+actual agent outputs with synthetic caller audio and deterministic policy replies.
 
-## Completion validation - 1 November 2026
+## Project layout and artifacts
 
-- 137 regression tests and all 96 practice conversation decision/tool checks pass.
-- The new check used exactly 20 LLM attempts (all Gemma 4), 2 Gnani attempts and
-  zero embedding calls. The independently measured peak was 10 LLM requests per
-  rolling minute, below 100 RPM. No additional calls were made after the cap.
-- A six-case Gemma 4 26B comparison exposed four contract rejections and one service
-  failure in RAG; the semantic score has one unresolved case and is not reported as
-  accuracy. Its raw outputs and failed judge batches are preserved.
-- The final Gemma 4 31B model completed three live contract smoke cases. A separate
-  zero-call replay through catalog completion passed their required literal facts.
-  Neither result is a full practice or organizer accuracy estimate. Full Gemma
-  benchmarking and human semantic review have not been performed.
-- Model failures now return audible recovery while remaining failed support turns.
-  Silence, ambiguous IDs and synthesis retries retain honest completion status.
-- A real synthetic spoken handover completed STT, session routing, ticket creation
-  and TTS. Human voice recordings are optional in the PS and remain untested.
+```text
+run.py                     Audio-folder entry point
+src/conversation.py        Shared session controller
+src/retrieval/             Public index, embeddings, search, and provenance
+src/tools/                 Verified lookups, public facts, and ticket gateway
+src/rules/                 Policy parsing and deterministic calculations
+src/speech/                Gnani adapters, audio handling, and recovery
+src/evaluation/            Isolated practice loaders and evaluation runners
+src/web.py                 Loopback HTTP server
+web/                       Dashboard assets and audio recorder
+scripts/                   Evaluation, reporting, and packaging utilities
+tests/                     Regression and integration checks
+sample_outputs/            Actual saved outputs and evaluation evidence
+```
 
-The four-page report, 27.854-second demo, source, actual sample outputs and
-`zentromart_voiceops.zip` are the local PS deliverables. The original PS is
-unchanged. Public repository synchronization and deployment remain deferred by
-request. To verify the ZIP without API calls, install Poppler (`pdfinfo`) alongside
-ffmpeg, then run:
+Release artifacts include the [report](report.pdf), [demo](demo.mp4),
+[requirement mapping](PS_COMPLETION.md), and `zentromart_voiceops.zip`.
+The package excludes Dataset, `.env`, credentials, virtual environments, private
+runtime/history, and caches. Generated state belongs under `runtime/`, outside
+the dataset. The release remains local; public synchronization and deployment
+are separate actions.
+
+To rebuild and verify the package without model calls:
 
 ```bash
+python scripts/build_release.py
 python scripts/verify_submission.py
 ```
 
-Report regeneration is optional and additionally needs `reportlab` and DejaVu Sans:
-`python scripts/build_report.py`. It reads shipped sample evidence and makes no
-provider calls. The capped-live-check script is a preserved, single-run experiment;
-its marker/budget prevents restarting it as a new unauthorized run.
+Verification additionally needs Poppler's `pdfinfo` and ffmpeg's `ffprobe`. It checks
+required files, hashes, blank example keys, credential exclusions, report page count,
+and demo duration/audio. Optional report regeneration needs `reportlab` and DejaVu
+Sans: `python scripts/build_report.py`. It reads shipped evidence without API calls.
+
+## Integration references
+
+- [Hosted Gemma models](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api)
+- [Gemini embedding guide](https://ai.google.dev/gemini-api/docs/embeddings)
+- [Official Gnani SDK](https://github.com/Gnani-AI-Mintlify/Gnani-Vachana/blob/main/README.md)
+- [Gnani Python package](https://pypi.org/project/gnani-vachana/)
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
